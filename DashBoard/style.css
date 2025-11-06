@@ -1,0 +1,206 @@
+body {
+  font-family: tahoma;
+  font-size: 28px;
+  width: 100%;
+  margin: 0px auto;
+  background-image: url('D:/DA2/DashBoard/dai-hoc-su-pham-ky-thuat-tp-hcm.jpg;'); 
+  background-size: cover; /* Đặt kích thước hình ảnh phủ toàn bộ màn hình */
+  background-position: center; /* Căn giữa hình ảnh */
+  background-repeat: no-repeat; /* Không lặp lại hình ảnh */
+  background-attachment: fixed; /* Giữ hình ảnh cố định khi cuộn */
+  min-height: 100vh;
+}
+
+#header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: rgb(59, 182, 193);
+  font-family: Arial, sans-serif;
+  animation: textPulse 2s infinite;
+}
+
+#logo {
+  height: 40px;
+}
+
+#header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: white; /* Đổi màu chữ header thành trắng để nổi bật với thời gian thực */
+}
+
+/* Style cho màn hình chào mừng */
+#welcome-section h1 {
+  font-size: 48px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Thêm bóng để chữ nổi bật trên background */
+  margin: 0;
+}
+
+/* Menu popup */
+/* ============ Menu ============ */
+#logo-menu {
+  position: absolute;
+  top: 60px;
+  left: 20px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  z-index: 1000;
+  padding: 10px;
+}
+
+#logo-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#logo-menu li {
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#logo-menu li:hover {
+  background: rgb(59,182,193);
+  color: rgb(224, 27, 27);
+}
+
+/* ============ Section ============ */
+.section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* căn giữa dọc */
+  align-items: center;     /* căn giữa ngang */
+  text-align: center;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1); /* Làm mờ để hòa hợp với background */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  min-height: 80vh;
+  backdrop-filter: blur(10px); /* Hiệu ứng blur cho section trên background */
+}
+
+#input-section h2 {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: white;
+}
+
+#phone-input {
+  padding: 12px;
+  font-size: 18px;
+  border: 3px solid #ccc;
+  border-radius: 6px;
+  width: 280px;              /* độ rộng khớp gần bằng với tiêu đề */
+  max-width: 90%;            /* không bị tràn màn hình */
+  text-align: center;
+  display: block;
+  margin: 0 auto 20px auto;  /* căn giữa + cách dưới */
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;   /* căn giữa 2 nút */
+  gap: 15px;                 /* khoảng cách giữa 2 nút */
+}
+
+button {
+  padding: 10px 50px;
+  font-size: 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+}
+
+button[type="submit"] {
+  background-color: #2ab6c9;
+}
+
+#delete-btn {
+  background-color: rgb(255, 2, 2);
+}
+
+/* Ẩn/hiện điều khiển bằng class hidden */
+.hidden {
+  display: none !important;
+}
+
+/* Hàng cảm biến */
+.sensor-row {
+  display: flex;
+  justify-content: center;   /* căn giữa */
+  gap: 2.5rem;               /* khoảng cách giữa các box */
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.sensor-box {
+  flex: 1;
+  max-width: 280px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.sensor-icon {
+  font-size: 2rem;
+  color: #ff4757;
+  margin-bottom: 0.5rem;
+}
+
+.sensor-box h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.sensor-box p {
+  font-size: 1.6rem;
+  font-weight: bold;
+}
+
+/* Hàng biểu đồ */
+.chart-row {
+  display: flex;
+  justify-content: center;   /* căn giữa */
+  gap: 1.5rem;               /* khoảng cách giữa các box */
+  width: 100%;
+}
+
+.chart-box {
+  flex: 1;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.chart-box h2 {
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.chart-box canvas {
+  width: 100% !important;
+  height: 200px !important;
+}
+
+/* Animation cho header */
+@keyframes textPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
