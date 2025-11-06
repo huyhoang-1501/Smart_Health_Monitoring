@@ -11,6 +11,10 @@
 #include <freertos/semphr.h>
 #include <Keypad.h>
 #include <HardwareSerial.h>
+#include <WiFi.h>
+#include <Firebase_ESP_Client.h>
+#include "addons/TokenHelper.h"
+#include "addons/RTDBHelper.h"
 
 // ================= Configuration ===================
 #define SCREEN_WIDTH 128
@@ -32,15 +36,29 @@
 #define A7682S_TX 17
 
 // Step Counter Parameters
-#define STEP_THRESHOLD 1.0       // Acceleration threshold for step detection
-#define BUFFER_LENGTH 15         // Buffer size for averaging
-#define DEBOUNCE_DELAY 300       // ms debounce for step detection
+#define STEP_THRESHOLD 1.0
+#define BUFFER_LENGTH 15
+#define DEBOUNCE_DELAY 300
 
 // MAX30100 Parameters
-#define REPORTING_PERIOD_MS 1000 // Update interval for heart rate and SpO2
-#define EMA_ALPHA 0.2            // EMA coefficient for filtering
+#define REPORTING_PERIOD_MS 1000
+#define EMA_ALPHA 0.2
 
-// Keypad 4x4 Configuration
+// Health Warning
+#define HR_LOW 50
+#define HR_HIGH 100
+#define STEP_LOW_LIMIT 80
+#define WARNING_DURATION 90000  // 90s
+#define HR_WARNING_COUNT 3
+#define STEP_WARNING_COUNT 2
+
+// WiFi & Firebase
+#define WIFI_SSID "Phong Tro Tang 3.2"
+#define WIFI_PASSWORD "99999999"
+#define API_KEY "AIzaSyD3_MWJ-A5wkar9UdDEjo0EuTTmmjxs-vo"
+#define DATABASE_URL "https://project-2-health-default-rtdb.asia-southeast1.firebasedatabase.app"
+
+// Keypad 4x4
 const byte ROWS = 4;
 const byte COLS = 4;
 char keys[ROWS][COLS] = {
@@ -57,35 +75,57 @@ Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, OLED_MOSI, OLED_CLK, OLED_
 Adafruit_MPU6050 mpu;
 PulseOximeter pox;
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
-HardwareSerial A7682S(1); // UART1
+HardwareSerial A7682S(1);
 SemaphoreHandle_t i2cMutex;
 QueueHandle_t sensorQueue;
+
+// Firebase
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+bool firebaseReady = false;
 
 // ================= Global Variables ===================
 float buffer[BUFFER_LENGTH];
 int bufferIndex = 0;
 int stepCount = 0;
+int pre_steps = 0;
 bool stepDetected = false;
 unsigned long lastStepTime = 0;
 float filteredBpm = 0.0;
 float filteredSpo2 = 0.0;
+float pre_bpm = 0.0, pre_spo2 = 0.0;
 String phoneNumber = "";
-bool displayMode = true; // true: Sensor Data, false: Phone Number Input
+String savedNumbers = "";
+bool displayMode = true; // true: Sensor, false: Input
 
-// ================= Data Structure ===================
+// Warning System
+int bpm_warning = 0, step_warning = 0;
+bool warning_enable = false;
+unsigned long warningStartTime = 0;
+
+// Data Structure
 struct SensorData {
   float bpm;
   float spo2;
-  int stepCount;
+  int steps;
+  int pre_steps;
+  float pre_bpm;
+  float pre_spo2;
 };
 
 // ================= Helper Functions ===================
 void onBeatDetected() {
-  Serial.println("♥ Beat!");
+  Serial.println("Beat!");
 }
 
-float exponentialMovingAverage(float currentValue, float previousFilteredValue, float alpha) {
-  return (alpha * currentValue) + ((1 - alpha) * previousFilteredValue);
+float ema(float current, float prev, float alpha) {
+  return alpha * current + (1 - alpha) * prev;
+}
+
+void sendAT(String cmd) {
+  A7682S.println(cmd);
+  Serial.println(">> " + cmd);
 }
 
 void displayLoadingScreen() {
@@ -93,7 +133,7 @@ void displayLoadingScreen() {
   display.setTextSize(1);
   display.setTextColor(SH110X_WHITE);
   display.setCursor(0, 0);
-  display.println("Khoi tao...");
+  display.println("Khoi tao he thong...");
   display.display();
   delay(2000);
 }
@@ -103,25 +143,57 @@ void updateSensorDisplay(const SensorData &data) {
   display.setTextSize(1);
   display.setTextColor(SH110X_WHITE);
 
-  // Title
   display.setCursor(0, 0);
   display.println("Smart Health Monitor");
 
-  // Steps
-  display.setCursor(0, 15);
-  display.print("Steps: ");
-  display.print(data.stepCount);
+  // HR
+  display.setCursor(0, 12);
+  display.print("HR: ");
+  if (data.bpm > 30 && data.bpm < 200) display.printf("%.0f bpm", data.bpm);
+  else display.print("--- bpm");
 
-  // BPM
-  display.setCursor(0, 30);
-  display.print("BPM: ");
-  display.print(data.bpm, 0);
+  display.setCursor(80, 12);
+  display.print("pre:");
+  if (data.pre_bpm > 30) display.printf("%.0f", data.pre_bpm);
+  else display.print("---");
 
   // SpO2
-  display.setCursor(0, 45);
+  display.setCursor(0, 22);
   display.print("SpO2: ");
-  display.print(data.spo2, 0);
-  display.print(" %");
+  if (data.spo2 > 50 && data.spo2 <= 100) display.printf("%.0f %%", data.spo2);
+  else display.print("--- %");
+
+  display.setCursor(80, 22);
+  display.print("pre:");
+  if (data.pre_spo2 > 50) display.printf("%.0f", data.pre_spo2);
+  else display.print("---");
+
+  // Steps
+  display.setCursor(0, 32);
+  display.print("Steps: ");
+  display.print(data.steps);
+
+  display.setCursor(80, 32);
+  display.print("cnt:");
+  display.print(data.pre_steps);
+
+  // Warning
+  if (warning_enable) {
+    display.setCursor(0, 45);
+    display.print("CANH BAO! Nhan A de tat");
+  } else {
+    display.setCursor(0, 45);
+    display.println("Nhan D de nhap SDT");
+  }
+
+  // Phone
+  display.setCursor(0, 55);
+  display.print("SDT: ");
+  if (savedNumbers.length() > 0) {
+    display.print(savedNumbers);
+  } else {
+    display.print("Chua co");
+  }
 
   display.display();
 }
@@ -131,108 +203,76 @@ void updatePhoneDisplay() {
   display.setTextSize(1);
   display.setTextColor(SH110X_WHITE);
   display.setCursor(0, 0);
-  display.println("Nhap so:");
+  display.println("Nhap so dien thoai:");
   display.setTextSize(2);
   display.setCursor(0, 20);
   display.println(phoneNumber);
+  display.setTextSize(1);
+  display.setCursor(0, 45);
+  display.println("A: Goi  B: Xoa  C: Ngat  D: Thoat");
   display.display();
 }
 
-bool initializeOLED() {
-  if (!display.begin(0, true)) {
-    Serial.println(F("SH1106 allocation failed"));
-    return false;
-  }
-  display.setContrast(255);
-  return true;
+void guiLenFirebase(const SensorData &data) {
+  if (!firebaseReady) return;
+
+  float bpmRounded = round(data.bpm);
+  Firebase.RTDB.setFloat(&fbdo, "/parameter/heartbeat", bpmRounded);
+  Firebase.RTDB.setFloat(&fbdo, "/parameter/spo2", data.spo2);
+  Firebase.RTDB.setInt(&fbdo, "/parameter/steps", data.steps);
+  Serial.printf("Firebase: HR=%.1f | SpO2=%.1f%% | Steps=%d\n", data.bpm, data.spo2, data.steps);
 }
 
-bool initializeMPU6050() {
-  if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
-    if (!mpu.begin()) {
-      Serial.println("Không tìm thấy MPU6050!");
-      xSemaphoreGive(i2cMutex);
-      return false;
+void docTuFirebase() {
+  if (!firebaseReady) return;
+
+  if (Firebase.RTDB.getString(&fbdo, "/user/phone/sdt")) {
+    if (fbdo.dataType() == "string") {
+      String sdt = fbdo.stringData();
+      if (sdt.length() == 10) {
+        savedNumbers = sdt;
+        Serial.println("Doc SDT tu Firebase: " + savedNumbers);
+      }
     }
-    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
-    xSemaphoreGive(i2cMutex);
-    Serial.println("MPU6050 OK.");
-    return true;
   }
-  return false;
-}
-
-bool initializeMAX30100() {
-  if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
-    if (!pox.begin()) {
-      Serial.println("Không tìm thấy MAX30100!");
-      xSemaphoreGive(i2cMutex);
-      return false;
-    }
-    pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
-    pox.setOnBeatDetectedCallback(onBeatDetected);
-    xSemaphoreGive(i2cMutex);
-    Serial.println("MAX30100 OK.");
-    return true;
-  }
-  return false;
-}
-
-float calculateMagnitude(sensors_event_t &accel) {
-  float x = accel.acceleration.x;
-  float y = accel.acceleration.y;
-  float z = accel.acceleration.z;
-  return sqrt(x * x + y * y + z * z);
-}
-
-float getAverageMagnitude() {
-  float sum = 0;
-  for (int i = 0; i < BUFFER_LENGTH; i++) {
-    sum += buffer[i];
-  }
-  return sum / BUFFER_LENGTH;
-}
-
-void sendAT(String cmd) {
-  A7682S.println(cmd);
-  Serial.println(">> " + cmd);
 }
 
 // ================= FreeRTOS Tasks ===================
 void readSensorTask(void *pvParameters) {
+  SensorData data;
+  uint32_t lastReport = 0;
+  bool first = true;
+
   while (true) {
-    SensorData data = {filteredBpm, filteredSpo2, stepCount};
+    data.bpm = filteredBpm;
+    data.spo2 = filteredSpo2;
+    data.steps = stepCount;
+    data.pre_steps = pre_steps;
+    data.pre_bpm = pre_bpm;
+    data.pre_spo2 = pre_spo2;
 
     // Read MPU6050
     sensors_event_t a, g, temp;
     if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
-      if (!mpu.getEvent(&a, &g, &temp)) {
-        Serial.println("Lỗi đọc MPU6050!");
-        xSemaphoreGive(i2cMutex);
-        vTaskDelay(50 / portTICK_PERIOD_MS);
-        continue;
-      }
+      mpu.getEvent(&a, &g, &temp);
       xSemaphoreGive(i2cMutex);
     }
 
-    float magnitude = calculateMagnitude(a);
+    float magnitude = sqrt(a.acceleration.x*a.acceleration.x +
+                           a.acceleration.y*a.acceleration.y +
+                           a.acceleration.z*a.acceleration.z);
     buffer[bufferIndex] = magnitude;
     bufferIndex = (bufferIndex + 1) % BUFFER_LENGTH;
+    float avg = 0;
+    for (int i = 0; i < BUFFER_LENGTH; i++) avg += buffer[i];
+    avg /= BUFFER_LENGTH;
 
-    float avgMagnitude = getAverageMagnitude();
-    unsigned long currentMillis = millis();
-
-    if (magnitude > (avgMagnitude + STEP_THRESHOLD)) {
-      if (!stepDetected && (currentMillis - lastStepTime) > DEBOUNCE_DELAY) {
-        stepCount++;
-        stepDetected = true;
-        lastStepTime = currentMillis;
-        Serial.print("Step detected! Count = ");
-        Serial.println(stepCount);
-        data.stepCount = stepCount;
-      }
-    } else {
+    unsigned long now = millis();
+    if (magnitude > avg + STEP_THRESHOLD && !stepDetected && (now - lastStepTime) > DEBOUNCE_DELAY) {
+      stepCount++;
+      stepDetected = true;
+      lastStepTime = now;
+    } else if (magnitude <= avg + STEP_THRESHOLD) {
       stepDetected = false;
     }
 
@@ -242,39 +282,82 @@ void readSensorTask(void *pvParameters) {
       xSemaphoreGive(i2cMutex);
     }
 
-    float bpm = pox.getHeartRate();
-    float spo2 = pox.getSpO2();
-    filteredBpm = exponentialMovingAverage(bpm, filteredBpm, EMA_ALPHA);
-    filteredSpo2 = exponentialMovingAverage(spo2, filteredSpo2, EMA_ALPHA);
+    float rawBpm = pox.getHeartRate();
+    float rawSpo2 = pox.getSpO2();
+    filteredBpm = ema(rawBpm, filteredBpm, EMA_ALPHA);
+    filteredSpo2 = ema(rawSpo2, filteredSpo2, EMA_ALPHA);
+
+    // Update every 60s
+    if (now - lastReport >= 60000 || first) {
+      first = false;
+      lastReport = now;
+
+      pre_bpm = filteredBpm;
+      pre_spo2 = filteredSpo2;
+      pre_steps = stepCount;
+
+      data.pre_bpm = pre_bpm;
+      data.pre_spo2 = pre_spo2;
+      data.pre_steps = pre_steps;
+
+      // Warning logic
+      if (filteredBpm < HR_LOW || filteredBpm > HR_HIGH) bpm_warning++;
+      else bpm_warning = 0;
+
+      if (stepCount <= STEP_LOW_LIMIT) step_warning++;
+      else step_warning = 0;
+
+      if (bpm_warning >= HR_WARNING_COUNT || step_warning >= STEP_WARNING_COUNT) {
+        if (!warning_enable) {
+          warning_enable = true;
+          warningStartTime = millis();
+          digitalWrite(LED_BUILTIN, HIGH);
+          Serial.println("CANH BAO KICH HOAT!");
+        }
+      }
+
+      guiLenFirebase(data);
+      stepCount = 0; // Reset sau mỗi phút
+    }
+
     data.bpm = filteredBpm;
     data.spo2 = filteredSpo2;
+    data.steps = stepCount;
 
     xQueueSend(sensorQueue, &data, portMAX_DELAY);
     vTaskDelay(20 / portTICK_PERIOD_MS);
   }
 }
 
-void displaySensorDataTask(void *pvParameters) {
+void displayTask(void *pvParameters) {
   SensorData data;
-  uint32_t lastDisplay = 0;
 
   while (true) {
     if (xQueueReceive(sensorQueue, &data, portMAX_DELAY)) {
-      if (millis() - lastDisplay >= REPORTING_PERIOD_MS) {
-        // Print to Serial
-        Serial.print("BPM: "); Serial.print(data.bpm, 2);
-        Serial.print(" | SpO2: "); Serial.print(data.spo2, 2);
-        Serial.print(" | Steps: "); Serial.println(data.stepCount);
-
-        // Update OLED based on display mode
-        if (displayMode) {
-          updateSensorDisplay(data);
-        }
-
-        lastDisplay = millis();
+      if (displayMode) {
+        updateSensorDisplay(data);
       }
     }
-    vTaskDelay(20 / portTICK_PERIOD_MS);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
+}
+
+void warningTask(void *pvParameters) {
+  while (true) {
+    if (warning_enable) {
+      unsigned long elapsed = millis() - warningStartTime;
+      if (elapsed >= WARNING_DURATION) {
+        Serial.println("90s qua, goi khan cap...");
+        sendAT("AT+CHUP");
+        delay(1000);
+        sendAT("ATD" + savedNumbers + ";");
+        warning_enable = false;
+        digitalWrite(LED_BUILTIN, LOW);
+        bpm_warning = 0;
+        step_warning = 0;
+      }
+    }
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
@@ -282,16 +365,35 @@ void keypadTask(void *pvParameters) {
   while (true) {
     char key = keypad.getKey();
     if (key) {
+      // Tắt cảnh báo bằng A
+      if (key == 'A' && warning_enable) {
+        warning_enable = false;
+        digitalWrite(LED_BUILTIN, LOW);
+        bpm_warning = 0;
+        step_warning = 0;
+        Serial.println("Da tat canh bao!");
+        continue;
+      }
+
+      // Gọi nhanh bằng C
+      if (key == 'C' && savedNumbers.length() > 0) {
+        sendAT("AT+CHUP");
+        delay(1000);
+        sendAT("ATD" + savedNumbers + ";");
+        continue;
+      }
+
+      // Chuyển chế độ nhập số bằng D
       if (key == 'D') {
-        displayMode = !displayMode; // Toggle display mode
-        if (displayMode) {
-          // Sensor data mode, display will be handled by displaySensorDataTask
-        } else {
-          updatePhoneDisplay(); // Immediately show phone number input screen
-        }
-      } else if (!displayMode) {
-        // Handle keypad input only in phone number mode
-        if (key >= '0' && key <= '9') {
+        displayMode = !displayMode;
+        phoneNumber = "";
+        if (!displayMode) updatePhoneDisplay();
+        continue;
+      }
+
+      // Chỉ xử lý nhập số khi ở chế độ nhập
+      if (!displayMode) {
+        if (key >= '0' && key <= '9' && phoneNumber.length() < 11) {
           phoneNumber += key;
           updatePhoneDisplay();
         } else if (key == 'B' && phoneNumber.length() > 0) {
@@ -299,74 +401,92 @@ void keypadTask(void *pvParameters) {
           updatePhoneDisplay();
         } else if (key == 'A' && phoneNumber.length() > 0) {
           sendAT("ATD" + phoneNumber + ";");
-          updatePhoneDisplay();
         } else if (key == 'C') {
           sendAT("ATH");
-          updatePhoneDisplay();
         }
       }
     }
 
-    // Handle A7682S responses
     while (A7682S.available()) {
       Serial.write(A7682S.read());
     }
-
     vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
 
-// ================== Setup ==================
+// ================= Setup ==================
 void setup() {
   Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
   Wire.begin(I2C_SDA, I2C_SCL);
-  Wire.setClock(400000); // Set I2C clock to 400kHz
+  Wire.setClock(400000);
   A7682S.begin(115200, SERIAL_8N1, A7682S_RX, A7682S_TX);
 
-  // Initialize mutex and queue
   i2cMutex = xSemaphoreCreateMutex();
   sensorQueue = xQueueCreate(10, sizeof(SensorData));
 
-  // Initialize OLED
-  if (!initializeOLED()) {
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("OLED Loi!");
-    display.display();
+  // OLED
+  if (!display.begin(0, true)) {
+    Serial.println("OLED Loi!");
     while (1);
   }
   displayLoadingScreen();
 
-  // Initialize MPU6050
-  if (!initializeMPU6050()) {
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("MPU6050 Loi!");
-    display.display();
-    while (1);
+  // MPU6050
+  if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
+    if (!mpu.begin()) {
+      Serial.println("MPU6050 Loi!");
+      xSemaphoreGive(i2cMutex);
+      while (1);
+    }
+    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+    xSemaphoreGive(i2cMutex);
   }
 
-  // Initialize MAX30100
-  if (!initializeMAX30100()) {
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.println("MAX30100 Loi!");
-    display.display();
-    while (1);
+  // MAX30100
+  if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
+    if (!pox.begin()) {
+      Serial.println("MAX30100 Loi!");
+      xSemaphoreGive(i2cMutex);
+      while (1);
+    }
+    pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
+    pox.setOnBeatDetectedCallback(onBeatDetected);
+    xSemaphoreGive(i2cMutex);
   }
 
-  // Initialize buffer
-  for (int i = 0; i < BUFFER_LENGTH; i++) {
-    buffer[i] = 0;
+  // WiFi
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Ket noi WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
   }
+  Serial.println("\nWiFi OK!");
 
-  // Create FreeRTOS tasks
-  xTaskCreatePinnedToCore(readSensorTask, "ReadSensor", 4096, NULL, 1, NULL, 1);
-  xTaskCreatePinnedToCore(displaySensorDataTask, "DisplayData", 4096, NULL, 1, NULL, 0);
-  xTaskCreatePinnedToCore(keypadTask, "KeypadTask", 4096, NULL, 1, NULL, 0);
+  // Firebase
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+  config.token_status_callback = tokenStatusCallback;
+  if (Firebase.signUp(&config, &auth, "", "")) {
+    firebaseReady = true;
+    Serial.println("Firebase OK!");
+  } else {
+    Serial.println("Firebase loi: " + config.signer.signupError.message);
+  }
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+
+  docTuFirebase();
+
+  // Tasks
+  xTaskCreatePinnedToCore(readSensorTask, "Sensor", 4096, NULL, 2, NULL, 1);
+  xTaskCreatePinnedToCore(displayTask, "Display", 4096, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(keypadTask, "Keypad", 4096, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(warningTask, "Warning", 2048, NULL, 1, NULL, 0);
 }
 
-// ================== Loop ==================
 void loop() {
-  vTaskDelay(100 / portTICK_PERIOD_MS); // Keep loop simple
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
