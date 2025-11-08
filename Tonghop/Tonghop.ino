@@ -1,63 +1,48 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
-#include <Adafruit_SH110X.h>
+#include <Adafruit_SSD1306.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
-#include <MAX30100_PulseOximeter.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/queue.h>
-#include <freertos/semphr.h>
-#include <Keypad.h>
-#include <HardwareSerial.h>
+#include "MAX30100_PulseOximeter.h"
 #include <WiFi.h>
 #include <Firebase_ESP_Client.h>
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
+#include <Keypad.h>
+#include <HardwareSerial.h>
 
-// ================= Configuration ===================
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-
-// OLED SPI Pins
-#define OLED_MOSI   23
-#define OLED_CLK    18
-#define OLED_DC     15
-#define OLED_CS     5
-#define OLED_RESET  4
-
-// I2C Pins for MPU6050 and MAX30100
-#define I2C_SDA 21
-#define I2C_SCL 22
-
-// UART1 for A7682S
-#define A7682S_RX 16
-#define A7682S_TX 17
-
-// Step Counter Parameters
-#define STEP_THRESHOLD 1.0
-#define BUFFER_LENGTH 15
-#define DEBOUNCE_DELAY 300
-
-// MAX30100 Parameters
-#define REPORTING_PERIOD_MS 1000
-#define EMA_ALPHA 0.2
-
-// Health Warning
-#define HR_LOW 50
-#define HR_HIGH 100
-#define STEP_LOW_LIMIT 80
-#define WARNING_DURATION 90000  // 90s
-#define HR_WARNING_COUNT 3
-#define STEP_WARNING_COUNT 2
-
-// WiFi & Firebase
+// ===== Thông tin WiFi và Firebase =====
 #define WIFI_SSID "Phong Tro Tang 3.2"
 #define WIFI_PASSWORD "99999999"
 #define API_KEY "AIzaSyD3_MWJ-A5wkar9UdDEjo0EuTTmmjxs-vo"
 #define DATABASE_URL "https://project-2-health-default-rtdb.asia-southeast1.firebasedatabase.app"
 
+// Firebase
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+bool signUp = false;
+
+// ===== OLED SPI =====
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_MOSI   23
+#define OLED_CLK    18
+#define OLED_CS   5
+#define OLED_DC   15
+#define OLED_RST  4
+
+// I2C Pins cho MAX30100 và MPU6050
+#define I2C_SDA 21
+#define I2C_SCL 22
+
+// UART1 cho A7682S
+#define A7682S_RX 16
+#define A7682S_TX 17
+
+//Chân GPIO cảnh báo
+#define PIN_OUT 2
 // Keypad 4x4
 const byte ROWS = 4;
 const byte COLS = 4;
@@ -69,424 +54,450 @@ char keys[ROWS][COLS] = {
 };
 byte rowPins[4] = {27,14,12,13};
 byte colPins[4] = {32,33,25,26};
-
-// ================= Global Objects ===================
-Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
-Adafruit_MPU6050 mpu;
+//Khởi tạo đối tượng 
+// OLED
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, OLED_MOSI, OLED_CLK, OLED_DC, OLED_RST, OLED_CS);
+// MAX30100
 PulseOximeter pox;
+// MPU6050
+Adafruit_MPU6050 mpu;
+// Keypad matrix 4x4
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
-HardwareSerial A7682S(1);
-SemaphoreHandle_t i2cMutex;
-QueueHandle_t sensorQueue;
+// SIM A7682S
+// ===== UART1 cho A7682S =====
+HardwareSerial A7682S(1); // UART1
 
-// Firebase
-FirebaseData fbdo;
-FirebaseAuth auth;
-FirebaseConfig config;
-bool firebaseReady = false;
+// Biến thời gian đo
+#define MEASURE_TIME 60000   // 60s
+uint32_t startTime = 0;
+bool measuring = false;
+float bpm = 0, spo2 = 0;
+float pre_bpm = 0, pre_spo2 = 0; // lưu giá trị cũ
+int pre_steps = 0;
 
-// ================= Global Variables ===================
-float buffer[BUFFER_LENGTH];
+//  Biến để đếm bước chân
+const float threshold = 1.0;   // ngưỡng cho người lớn tuổi
+const int bufferLength = 15;
+float buffer[bufferLength];
 int bufferIndex = 0;
 int stepCount = 0;
-int pre_steps = 0;
 bool stepDetected = false;
+const unsigned long debounceDelay = 300; // ms
 unsigned long lastStepTime = 0;
-float filteredBpm = 0.0;
-float filteredSpo2 = 0.0;
-float pre_bpm = 0.0, pre_spo2 = 0.0;
-String phoneNumber = "";
-String savedNumbers = "";
-bool displayMode = true; // true: Sensor, false: Input
 
-// Warning System
+// Biến điều khiển 
+bool inInputMode = false;   // Trạng thái màn hình nhập số
+String phoneNumber = "";    // Số đang nhập
+String savedNumbers = "";   // Danh sách các số đã lưu
+
+// Biến kiểm tra nhịp tim và bước chân
 int bpm_warning = 0, step_warning = 0;
+// Biến cảnh báo
 bool warning_enable = false;
-unsigned long warningStartTime = 0;
+unsigned long warningStartTime = 0; // Thời điểm bắt đầu cảnh báo
+const unsigned long WARNING_DURATION = 90000; // 1 phút 30 giây
 
-// Data Structure
-struct SensorData {
-  float bpm;
-  float spo2;
-  int steps;
-  int pre_steps;
-  float pre_bpm;
-  float pre_spo2;
-};
 
-// ================= Helper Functions ===================
-void onBeatDetected() {
-  Serial.println("Beat!");
-}
-
-float ema(float current, float prev, float alpha) {
-  return alpha * current + (1 - alpha) * prev;
-}
-
+// ===== Gửi lệnh AT =====
 void sendAT(String cmd) {
   A7682S.println(cmd);
   Serial.println(">> " + cmd);
 }
-
-void displayLoadingScreen() {
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SH110X_WHITE);
-  display.setCursor(0, 0);
-  display.println("Khoi tao he thong...");
-  display.display();
-  delay(2000);
+// ===== Callback cập nhật mỗi khi có nhịp tim =====
+void onBeatDetected() {
+  Serial.println("Nhịp tim!");
 }
 
-void updateSensorDisplay(const SensorData &data) {
+// ====== Hiển thị giao diện ban đầu ======
+void giao_dien_hien_thi() {
   display.clearDisplay();
+  
   display.setTextSize(1);
-  display.setTextColor(SH110X_WHITE);
-
+  display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
   display.println("Smart Health Monitor");
 
-  // HR
-  display.setCursor(0, 12);
-  display.print("HR: ");
-  if (data.bpm > 30 && data.bpm < 200) display.printf("%.0f bpm", data.bpm);
-  else display.print("--- bpm");
+  display.setCursor(0, 10);
+  display.print("Time:");
 
-  display.setCursor(80, 12);
+  // HR
+  display.setCursor(0, 20);
+  display.print("HR:");
+  display.setCursor(24, 20);
+  display.print("--- bpm");
+  display.setCursor(80, 20);
   display.print("pre:");
-  if (data.pre_bpm > 30) display.printf("%.0f", data.pre_bpm);
-  else display.print("---");
+  display.setCursor(104, 20);
+  display.print("---");
 
   // SpO2
-  display.setCursor(0, 22);
-  display.print("SpO2: ");
-  if (data.spo2 > 50 && data.spo2 <= 100) display.printf("%.0f %%", data.spo2);
-  else display.print("--- %");
-
-  display.setCursor(80, 22);
+  display.setCursor(0, 30);
+  display.print("SpO2:");
+  display.setCursor(36, 30);
+  display.print("--- %");
+  display.setCursor(80, 30);
   display.print("pre:");
-  if (data.pre_spo2 > 50) display.printf("%.0f", data.pre_spo2);
-  else display.print("---");
+  display.setCursor(104, 30);
+  display.print("---");
 
   // Steps
-  display.setCursor(0, 32);
-  display.print("Steps: ");
-  display.print(data.steps);
-
-  display.setCursor(80, 32);
+  display.setCursor(0, 40);
+  display.print("Steps:");
+  display.setCursor(42, 40);
+  display.print("---");
+  display.setCursor(80, 40);
   display.print("cnt:");
-  display.print(data.pre_steps);
-
-  // Warning
-  if (warning_enable) {
-    display.setCursor(0, 45);
-    display.print("CANH BAO! Nhan A de tat");
-  } else {
-    display.setCursor(0, 45);
-    display.println("Nhan D de nhap SDT");
-  }
-
-  // Phone
-  display.setCursor(0, 55);
-  display.print("SDT: ");
-  if (savedNumbers.length() > 0) {
-    display.print(savedNumbers);
-  } else {
-    display.print("Chua co");
-  }
-
+  display.setCursor(104, 40);
+  display.print("---");
+  
+  //Gợi ý nhấn nút "*"
+  display.setCursor(0, 54);
+  display.println("Nhan '*' de nhap SDT");
   display.display();
 }
-
-void updatePhoneDisplay() {
+// ===== Hiển thị màn hình nhập =====
+void giao_dien_nhap_sdt() {
   display.clearDisplay();
   display.setTextSize(1);
-  display.setTextColor(SH110X_WHITE);
-  display.setCursor(0, 0);
-  display.println("Nhap so dien thoai:");
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,0);
+  display.println("Nhap so:");
   display.setTextSize(2);
-  display.setCursor(0, 20);
+  display.setCursor(0,14);
   display.println(phoneNumber);
   display.setTextSize(1);
-  display.setCursor(0, 45);
-  display.println("A: Goi  B: Xoa  C: Ngat  D: Thoat");
+  display.setCursor(0,44);
+  display.println("*:Thoat  D:Luu");
+  display.setTextSize(1);
+  display.setCursor(0, 54);
+  display.println("Luu:");
+  display.setCursor(30, 54);
+  display.print(savedNumbers);
   display.display();
 }
 
-void guiLenFirebase(const SensorData &data) {
-  if (!firebaseReady) return;
+// Hiển thị lưu thành công 
+void man_hinh_luu() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(15, 20);
+  display.println("Da luu!");
+  display.display();
+}
 
-  float bpmRounded = round(data.bpm);
-  Firebase.RTDB.setFloat(&fbdo, "/parameter/heartbeat", bpmRounded);
-  Firebase.RTDB.setFloat(&fbdo, "/parameter/spo2", data.spo2);
-  Firebase.RTDB.setInt(&fbdo, "/parameter/steps", data.steps);
-  Serial.printf("Firebase: HR=%.1f | SpO2=%.1f%% | Steps=%d\n", data.bpm, data.spo2, data.steps);
+void guiLenFirebase()
+{
+  if (Firebase.ready() && signUp)
+  {
+    float bpmRounded = round(bpm);
+    Firebase.RTDB.setFloat(&fbdo, "/parameter/heartbeat", bpmRounded);
+    Firebase.RTDB.setFloat(&fbdo, "/parameter/spo2", spo2);
+    Firebase.RTDB.setInt(&fbdo, "/parameter/steps", stepCount);
+
+    Serial.printf("Gửi Firebase: HR=%.1f bpm | SpO2=%.1f%% | Steps=%d\n", bpm, spo2, stepCount);
+  }
 }
 
 void docTuFirebase() {
-  if (!firebaseReady) return;
-
-  if (Firebase.RTDB.getString(&fbdo, "/user/phone/sdt")) {
-    if (fbdo.dataType() == "string") {
-      String sdt = fbdo.stringData();
-      if (sdt.length() == 10) {
+  if (Firebase.ready() && signUp) {
+    if (Firebase.RTDB.getString(&fbdo, "/user/phone/sdt")) {
+      if (fbdo.dataType() == "string") {
+        String sdt = fbdo.stringData();
+        Serial.print(" Số điện thoại đọc được từ Firebase: ");
+        Serial.println(sdt);
+        if (sdt.length() == 10)
         savedNumbers = sdt;
-        Serial.println("Doc SDT tu Firebase: " + savedNumbers);
       }
+    } else {
+      Serial.print(" Lỗi khi đọc dữ liệu: ");
+      Serial.println(fbdo.errorReason());
     }
   }
 }
 
-// ================= FreeRTOS Tasks ===================
-void readSensorTask(void *pvParameters) {
-  SensorData data;
-  uint32_t lastReport = 0;
-  bool first = true;
-
+void xu_li_man_hinh_nhap()
+{
   while (true) {
-    data.bpm = filteredBpm;
-    data.spo2 = filteredSpo2;
-    data.steps = stepCount;
-    data.pre_steps = pre_steps;
-    data.pre_bpm = pre_bpm;
-    data.pre_spo2 = pre_spo2;
+    char key2 = keypad.getKey();
+    if (!key2) continue;
 
-    // Read MPU6050
-    sensors_event_t a, g, temp;
-    if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
-      mpu.getEvent(&a, &g, &temp);
-      xSemaphoreGive(i2cMutex);
+    if (key2 >= '0' && key2 <= '9') {
+    if (phoneNumber.length() < 11) {
+        phoneNumber += key2;
+        giao_dien_nhap_sdt();
+      }
     }
+    // 🔹 Nút B: Xóa 1 ký tự cuối
+    else if (key2 == 'B' && phoneNumber.length() > 0) {
+      phoneNumber.remove(phoneNumber.length() - 1);
+      giao_dien_nhap_sdt();
+    }
+    // 🔹 Nút D: Lưu số
+    else if (key2 == 'D' && phoneNumber.length() > 0) {
+      savedNumbers = phoneNumber;
+      Serial.println("Đã lưu số mới: " + savedNumbers);
+      man_hinh_luu();
+      delay(1500);
+      inInputMode = false;
+      giao_dien_hien_thi();
+      break;
+    }
+    // 🔹 Nút *: Thoát nhập
+    else if (key2 == '*') {
+      inInputMode = false;
+      giao_dien_hien_thi();
+      break;
+    }
+  }
+}
 
-    float magnitude = sqrt(a.acceleration.x*a.acceleration.x +
-                           a.acceleration.y*a.acceleration.y +
-                           a.acceleration.z*a.acceleration.z);
-    buffer[bufferIndex] = magnitude;
-    bufferIndex = (bufferIndex + 1) % BUFFER_LENGTH;
-    float avg = 0;
-    for (int i = 0; i < BUFFER_LENGTH; i++) avg += buffer[i];
-    avg /= BUFFER_LENGTH;
+void xu_li_keypad() {
+  char key = keypad.getKey();
+  if (!key) return;
 
-    unsigned long now = millis();
-    if (magnitude > avg + STEP_THRESHOLD && !stepDetected && (now - lastStepTime) > DEBOUNCE_DELAY) {
+  // ===== Nút A: Tắt cảnh báo sức khỏe =====
+  if (key == 'A' && warning_enable) {
+    warning_enable = false;
+    digitalWrite(LED_BUILTIN, LOW);
+    bpm_warning = 0;
+    step_warning = 0;
+    Serial.println("Cảnh báo đã được tắt thủ công bằng nút A!");
+    return;
+  }
+
+  // ===== Nút C (gọi) — hoạt động ở mọi chế độ =====
+  if (key == 'C' && savedNumbers.length() > 0) {
+    sendAT("AT+CHUP");       // Dừng cuộc gọi cũ nếu có
+    delay(1000);
+    sendAT("AT+CREG?");
+    delay(1000);
+    sendAT("ATD" + savedNumbers + ";");
+    return;
+  }
+
+  // ===== Màn hình chính =====
+  if (!inInputMode) {
+    if (key == '*') {
+      inInputMode = true;
+      phoneNumber = "";
+      giao_dien_nhap_sdt();
+      xu_li_man_hinh_nhap();
+      }
+    }
+  }
+
+// Hàm reset các biến trong quá trình đo
+void reset_cac_bien_do(){
+      pox.begin(); // Re-init lại cảm biến 
+      pox.setOnBeatDetectedCallback(onBeatDetected);
+      startTime = millis();
+      measuring = true;
+      stepCount = 0;
+}
+void dem_buoc_chan()
+{
+  // -------- MPU6050 Step Counter --------
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  float accX = a.acceleration.x;
+  float accY = a.acceleration.y;
+  float accZ = a.acceleration.z;
+  float magnitude = sqrt(accX * accX + accY * accY + accZ * accZ);
+
+  buffer[bufferIndex] = magnitude;
+  bufferIndex = (bufferIndex + 1) % bufferLength;
+
+  float avgMagnitude = 0;
+  for (int i = 0; i < bufferLength; i++) {
+    avgMagnitude += buffer[i];
+  }
+  avgMagnitude /= bufferLength;
+
+  unsigned long currentMillis = millis();
+  if (magnitude > (avgMagnitude + threshold)) {
+    if (!stepDetected && (currentMillis - lastStepTime) > debounceDelay) {
       stepCount++;
       stepDetected = true;
-      lastStepTime = now;
-    } else if (magnitude <= avg + STEP_THRESHOLD) {
-      stepDetected = false;
+      lastStepTime = currentMillis;
+
+      Serial.print("Step detected! Count = ");
+      Serial.println(stepCount);
+      display.fillRect(104, 40, 24, 8, SSD1306_BLACK);
+      display.setCursor(104, 40);
+      display.print(stepCount);
+      display.display();
     }
+  } else {
+    stepDetected = false;
+  }
+}
 
-    // Read MAX30100
-    if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
-      pox.update();
-      xSemaphoreGive(i2cMutex);
-    }
+// ====== Hàm đo nhịp tim & SpO2 ======
+void xu_li_va_hien_thi_thong_so() {
+  if (measuring) {
+    unsigned long elapsed = millis() - startTime;
+    int remaining = (MEASURE_TIME - elapsed) / 1000;
+    if (remaining < 0) remaining = 0;
 
-    float rawBpm = pox.getHeartRate();
-    float rawSpo2 = pox.getSpO2();
-    filteredBpm = ema(rawBpm, filteredBpm, EMA_ALPHA);
-    filteredSpo2 = ema(rawSpo2, filteredSpo2, EMA_ALPHA);
+    // Hiển thị đếm ngược thời gian
+    display.fillRect(36, 10, 50, 10, SSD1306_BLACK);
+    display.setCursor(36, 10);
+    display.print(remaining);
+    display.print("s");
+    display.display();
 
-    // Update every 60s
-    if (now - lastReport >= 60000 || first) {
-      first = false;
-      lastReport = now;
+    // Khi hết thời gian đo
+    if (elapsed >= MEASURE_TIME) {
+      bpm = pox.getHeartRate();
+      spo2 = pox.getSpO2();
+      // Xóa vùng hiển thị cũ
+      display.fillRect(24, 20, 52, 8, SSD1306_BLACK);
+      display.fillRect(36, 30, 44, 8, SSD1306_BLACK);
 
-      pre_bpm = filteredBpm;
-      pre_spo2 = filteredSpo2;
+      // Hiển thị HR mới
+      display.setCursor(24, 20);
+      if (bpm > 30 && bpm < 200) display.printf("%.0f bpm", bpm);
+      else display.print("--- bpm");
+
+      // Hiển thị SpO2 mới
+      display.setCursor(36, 30);
+      if (spo2 > 50 && spo2 <= 100) display.printf("%.0f %%", spo2);
+      else display.print("--- %");
+
+      // ======= HIỂN THỊ BƯỚC CHÂN =======
+      // Cập nhật Pre Steps
       pre_steps = stepCount;
+      display.fillRect(42, 40, 36, 8, SSD1306_BLACK);
+      display.setCursor(42, 40);
+      display.print(pre_steps);
+      display.display();
 
-      data.pre_bpm = pre_bpm;
-      data.pre_spo2 = pre_spo2;
-      data.pre_steps = pre_steps;
+      // ======= CẬP NHẬT HR, SpO2 CŨ (Pre) =======
+      display.fillRect(104, 20, 24, 8, SSD1306_BLACK);
+      display.setCursor(104, 20);
+      if (pre_bpm > 30 && pre_bpm < 200) display.printf("%.0f", pre_bpm);
+      else display.print("---");
 
-      // Warning logic
-      if (filteredBpm < HR_LOW || filteredBpm > HR_HIGH) bpm_warning++;
-      else bpm_warning = 0;
+      display.fillRect(104, 30, 24, 8, SSD1306_BLACK);
+      display.setCursor(104, 30);
+      if (pre_spo2 > 50 && pre_spo2 <= 100) display.printf("%.0f", pre_spo2);
+      else display.print("---");
 
-      if (stepCount <= STEP_LOW_LIMIT) step_warning++;
-      else step_warning = 0;
+      display.display();
 
-      if (bpm_warning >= HR_WARNING_COUNT || step_warning >= STEP_WARNING_COUNT) {
-        if (!warning_enable) {
-          warning_enable = true;
-          warningStartTime = millis();
-          digitalWrite(LED_BUILTIN, HIGH);
-          Serial.println("CANH BAO KICH HOAT!");
-        }
-      }
-
-      guiLenFirebase(data);
-      stepCount = 0; // Reset sau mỗi phút
+      // Ghi nhận giá trị mới cho lần sau
+      pre_bpm = bpm;
+      pre_spo2 = spo2;
+      measuring = false;
+      Serial.printf("Ket qua: HR=%.0f bpm | SpO2=%.0f%% | Steps=%d\n", bpm, spo2, stepCount);
+      if (bpm < 50 || bpm > 100) bpm_warning ++;
+      if (pre_steps <= 80) step_warning ++;
+      guiLenFirebase();
+      delay(1000);
     }
-
-    data.bpm = filteredBpm;
-    data.spo2 = filteredSpo2;
-    data.steps = stepCount;
-
-    xQueueSend(sensorQueue, &data, portMAX_DELAY);
-    vTaskDelay(20 / portTICK_PERIOD_MS);
   }
 }
 
-void displayTask(void *pvParameters) {
-  SensorData data;
 
-  while (true) {
-    if (xQueueReceive(sensorQueue, &data, portMAX_DELAY)) {
-      if (displayMode) {
-        updateSensorDisplay(data);
-      }
+//Hàm cảnh bảo
+void canh_bao_suc_khoe()
+{
+ if (bpm_warning >= 3 || step_warning >= 2)
+  {
+    if (!warning_enable)
+    {
+      warning_enable = true;
+      warningStartTime = millis(); // Lưu thời điểm bắt đầu
+      //digitalWrite(PIN_OUT, HIGH);
+      digitalWrite(LED_BUILTIN, HIGH);
+      Serial.println("Cảnh báo sức khỏe kích hoạt!");
     }
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    if (warning_enable)
+    {
+     unsigned long elapsed = millis() - warningStartTime;
+
+     // Nếu quá 2 phút 30s mà chưa tắt => tự động gọi
+     if (elapsed >= WARNING_DURATION)
+     {
+      Serial.println("Quá 150s, thực hiện cuộc gọi khẩn cấp...");
+      sendAT("AT+CHUP");       // Dừng cuộc gọi cũ nếu có
+      delay(1000);
+      sendAT("AT+CREG?");
+      delay(1000);
+      sendAT("ATD" + savedNumbers + ";");
+      warning_enable = false;  // Reset cảnh báo sau khi gọi
+      //digitalWrite(PIN_OUT, LOW);
+      digitalWrite(LED_BUILTIN, LOW);
+      bpm_warning = 0;
+      step_warning = 0;
+     }
+    }
   }
 }
-
-void warningTask(void *pvParameters) {
-  while (true) {
-    if (warning_enable) {
-      unsigned long elapsed = millis() - warningStartTime;
-      if (elapsed >= WARNING_DURATION) {
-        Serial.println("90s qua, goi khan cap...");
-        sendAT("AT+CHUP");
-        delay(1000);
-        sendAT("ATD" + savedNumbers + ";");
-        warning_enable = false;
-        digitalWrite(LED_BUILTIN, LOW);
-        bpm_warning = 0;
-        step_warning = 0;
-      }
-    }
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-  }
-}
-
-void keypadTask(void *pvParameters) {
-  while (true) {
-    char key = keypad.getKey();
-    if (key) {
-      // Tắt cảnh báo bằng A
-      if (key == 'A' && warning_enable) {
-        warning_enable = false;
-        digitalWrite(LED_BUILTIN, LOW);
-        bpm_warning = 0;
-        step_warning = 0;
-        Serial.println("Da tat canh bao!");
-        continue;
-      }
-
-      // Gọi nhanh bằng C
-      if (key == 'C' && savedNumbers.length() > 0) {
-        sendAT("AT+CHUP");
-        delay(1000);
-        sendAT("ATD" + savedNumbers + ";");
-        continue;
-      }
-
-      // Chuyển chế độ nhập số bằng D
-      if (key == 'D') {
-        displayMode = !displayMode;
-        phoneNumber = "";
-        if (!displayMode) updatePhoneDisplay();
-        continue;
-      }
-
-      // Chỉ xử lý nhập số khi ở chế độ nhập
-      if (!displayMode) {
-        if (key >= '0' && key <= '9' && phoneNumber.length() < 11) {
-          phoneNumber += key;
-          updatePhoneDisplay();
-        } else if (key == 'B' && phoneNumber.length() > 0) {
-          phoneNumber.remove(phoneNumber.length() - 1);
-          updatePhoneDisplay();
-        } else if (key == 'A' && phoneNumber.length() > 0) {
-          sendAT("ATD" + phoneNumber + ";");
-        } else if (key == 'C') {
-          sendAT("ATH");
-        }
-      }
-    }
-
-    while (A7682S.available()) {
-      Serial.write(A7682S.read());
-    }
-    vTaskDelay(10 / portTICK_PERIOD_MS);
-  }
-}
-
-// ================= Setup ==================
+// ===== Khởi tạo =====
 void setup() {
   Serial.begin(115200);
+  delay(1000);
   pinMode(LED_BUILTIN, OUTPUT);
-  Wire.begin(I2C_SDA, I2C_SCL);
-  Wire.setClock(400000);
+  // A7682S
   A7682S.begin(115200, SERIAL_8N1, A7682S_RX, A7682S_TX);
-
-  i2cMutex = xSemaphoreCreateMutex();
-  sensorQueue = xQueueCreate(10, sizeof(SensorData));
-
   // OLED
-  if (!display.begin(0, true)) {
-    Serial.println("OLED Loi!");
+  if(!display.begin(SSD1306_SWITCHCAPVCC)) {
+    Serial.println(F("Lỗi OLED!"));
     while (1);
   }
-  displayLoadingScreen();
-
+  
   // MPU6050
-  if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
-    if (!mpu.begin()) {
-      Serial.println("MPU6050 Loi!");
-      xSemaphoreGive(i2cMutex);
-      while (1);
-    }
-    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
-    xSemaphoreGive(i2cMutex);
+  if (!mpu.begin()) {
+    Serial.println("MPU6050 not found!");
+    while (1) delay(10);
   }
-
-  // MAX30100
-  if (xSemaphoreTake(i2cMutex, portMAX_DELAY)) {
-    if (!pox.begin()) {
-      Serial.println("MAX30100 Loi!");
-      xSemaphoreGive(i2cMutex);
-      while (1);
-    }
-    pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
-    pox.setOnBeatDetectedCallback(onBeatDetected);
-    xSemaphoreGive(i2cMutex);
-  }
-
-  // WiFi
+  Serial.println("MPU6050 OK.");
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+  // ===== WiFi =====
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.print("Ket noi WiFi");
+  Serial.print("Đang kết nối WiFi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("\nWiFi OK!");
+  Serial.println("\nWiFi connected!");
+  Serial.println(WiFi.localIP());
 
-  // Firebase
+  // ===== Firebase =====
   config.api_key = API_KEY;
   config.database_url = DATABASE_URL;
-  config.token_status_callback = tokenStatusCallback;
   if (Firebase.signUp(&config, &auth, "", "")) {
-    firebaseReady = true;
-    Serial.println("Firebase OK!");
+    Serial.println("Đăng ký Firebase thành công!");
+    signUp = true;
   } else {
-    Serial.println("Firebase loi: " + config.signer.signupError.message);
+    Serial.printf("Lỗi Firebase: %s\n", config.signer.signupError.message.c_str());
   }
+  config.token_status_callback = tokenStatusCallback;
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
-
-  docTuFirebase();
-
-  // Tasks
-  xTaskCreatePinnedToCore(readSensorTask, "Sensor", 4096, NULL, 2, NULL, 1);
-  xTaskCreatePinnedToCore(displayTask, "Display", 4096, NULL, 1, NULL, 0);
-  xTaskCreatePinnedToCore(keypadTask, "Keypad", 4096, NULL, 1, NULL, 0);
-  xTaskCreatePinnedToCore(warningTask, "Warning", 2048, NULL, 1, NULL, 0);
+  // MAX30100
+  if (!pox.begin()) {
+    Serial.println("Loi khoi dong MAX30100");
+    while (1);
+  }
+  pox.setOnBeatDetectedCallback(onBeatDetected);
+  giao_dien_hien_thi();
+  // Bắt đầu đo
+  measuring = true;
+  startTime = millis();
 }
 
+// ===== Vòng lặp =====
 void loop() {
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  pox.update();
+  dem_buoc_chan();
+  xu_li_va_hien_thi_thong_so();
+  canh_bao_suc_khoe();
+  xu_li_keypad();
+  if(!measuring) reset_cac_bien_do();
+  while (A7682S.available()) Serial.write(A7682S.read());
 }
