@@ -7,6 +7,7 @@
   <title>Smart Health Monitoring</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0"></script>
   <link rel="icon" href="image/logo.png" type="image/png">
   <link rel="stylesheet" href="style.css">
@@ -85,11 +86,11 @@
       <div class="ai-inputs">
         <div class="input-group">
           <label>Heart Rate (BPM):</label>
-          <input type="number" id="ai-bpm" value="94" min="30" max="200">
+          <input type="number" id="ai-bpm" placeholder="Enter BPM" min="30" max="200">
         </div>
         <div class="input-group">
           <label>SpO₂ (%):</label>
-          <input type="number" id="ai-spo2" value="98" min="70" max="100">
+         <input type="number" id="ai-spo2" placeholder="Enter SpO₂" min="70" max="100">
         </div>
       </div>
       <button id="ai-predict-btn" class="btn-ai-predict">PREDICT NOW</button>
