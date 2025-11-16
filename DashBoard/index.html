@@ -7,37 +7,38 @@
   <title>Smart Health Monitoring</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0"></script>
   <link rel="icon" href="image/logo.png" type="image/png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="header">
     <img src="image/health.png" id="logo" alt="Smart Health Monitoring Logo">
-  <div id="header-title">
-    <div id="date"></div>
-    <div id="time"></div>
-  </div>
-    <!-- Thêm logo HCMUTE bên phải -->
+    <div id="header-title">
+      <div id="date"></div>
+      <div id="time"></div>
+    </div>
     <div id="logo-hcmute">
       <img src="image/logo_spkt.png" alt="HCMUTE Logo">
       <span>HCMUTE</span>
     </div>
   </div>
 
-  <!-- Menu xổ ra khi click logo -->
+  <!-- MENU XỔ XUỐNG – CÓ AI -->
   <div id="logo-menu" class="hidden">
     <ul>
       <li onclick="showSection('input')">Enter Number Phone</li>
-      <li onclick="showSection('display')">Display Health Parameters </li>
+      <li onclick="showSection('display')">Display Health Parameters</li>
+      <li onclick="showSection('ai')">AI Health Prediction</li>
     </ul>
   </div>
 
-  <!-- Màn hình chào mừng ban đầu -->
+  <!-- MÀN HÌNH CHÀO -->
   <div id="welcome-section" class="section">
     <h1>Smart Health Monitoring</h1>
   </div>
 
-  <!-- Nội dung nhập dữ liệu -->
+  <!-- NHẬP SỐ ĐIỆN THOẠI -->
   <div id="input-section" class="section hidden">
     <form id="phone-form">
       <h2>Enter the phone number</h2>
@@ -50,19 +51,17 @@
     <p id="status"></p>
   </div>
 
-  <!-- Nội dung hiển thị dữ liệu -->
+  <!-- HIỂN THỊ CẢM BIẾN + BIỂU ĐỒ – ĐÃ XÓA AI BOX -->
   <div id="display-section" class="section hidden">
-
-    <!-- Hàng cảm biến -->
     <section class="sensor-row">
       <div class="sensor-box">
         <div class="sensor-icon"><i class="fas fa-heartbeat"></i></div>
-        <h2>Nhịp tim</h2>
-        <p id="image/heartbeat">0 bpm</p>
+        <h2>Heart Rate</h2>
+        <p id="heartbeat">0 bpm</p>
       </div>
       <div class="sensor-box">
         <div class="sensor-icon"><i class="fas fa-shoe-prints"></i></div>
-        <h2>Bước chân</h2>
+        <h2>Step</h2>
         <p id="steps">0</p>
       </div>
       <div class="sensor-box">
@@ -72,28 +71,35 @@
       </div>
     </section>
 
-    <!-- Hàng biểu đồ -->
     <section class="chart-row">
-      <div class="chart-box">
-        <h2>Biểu đồ Nhịp tim</h2>
-        <canvas id="heartChart"></canvas>
-      </div>
-      <div class="chart-box">
-        <h2>Biểu đồ Bước chân</h2>
-        <canvas id="stepChart"></canvas>
-      </div>
-      <div class="chart-box">
-        <h2>Biểu đồ SpO₂</h2>
-        <canvas id="spo2Chart"></canvas>
-      </div>
+      <div class="chart-box"><h2>Chart For Heart Rate</h2><canvas id="heartChart"></canvas></div>
+      <div class="chart-box"><h2>Chart For Footstep</h2><canvas id="stepChart"></canvas></div>
+      <div class="chart-box"><h2>Chart For SpO₂</h2><canvas id="spo2Chart"></canvas></div>
     </section>
+  </div>
 
+  <!-- AI RIÊNG – CHỈ CÓ Ở ĐÂY -->
+  <div id="ai-section" class="section hidden">
+    <div class="ai-container">
+      <h1>AI Health Prediction</h1>
+      <div class="ai-inputs">
+        <div class="input-group">
+          <label>Heart Rate (BPM):</label>
+          <input type="number" id="ai-bpm" value="94" min="30" max="200">
+        </div>
+        <div class="input-group">
+          <label>SpO₂ (%):</label>
+          <input type="number" id="ai-spo2" value="98" min="70" max="100">
+        </div>
+      </div>
+      <button id="ai-predict-btn" class="btn-ai-predict">PREDICT NOW</button>
+      <div id="ai-result-full" class="ai-result-box">Enter data to predict</div>
+    </div>
   </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-database.js"></script>
-  <!-- Function chính -->
   <script src="function.js"></script>
 </body>
 </html>

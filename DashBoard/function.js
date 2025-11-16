@@ -217,3 +217,23 @@ db.ref('parameter').on('value', snap => {
   spo2Chart.data.datasets[0].data = sensorData.spo2;
   spo2Chart.update();
 });
+
+// ================== AI DỰ ĐOÁN TRONG MENU  ==================
+document.getElementById('ai-predict-btn')?.addEventListener('click', async () => {
+  const resultEl = document.getElementById('ai-result-full');
+  if (!aiModel || !aiScaler) { resultEl.textContent = "AI chưa load xong..."; resultEl.style.color = "red"; return; }
+  const bpm = parseFloat(document.getElementById('ai-bpm').value) || 0;
+  const spo2 = parseFloat(document.getElementById('ai-spo2').value) || 0;
+  if (bpm < 30 || bpm > 200 || spo2 < 70 || spo2 > 100) { resultEl.textContent = "Dữ liệu không hợp lệ!"; resultEl.style.color = "red"; return; }
+  const x1 = (bpm - aiScaler.mean[0]) / aiScaler.scale[0];
+  const x2 = (spo2 - aiScaler.mean[1]) / aiScaler.scale[1];
+  const pred = aiModel.predict(tf.tensor2d([[x1, x2]])).argMax(-1).dataSync()[0];
+  const label = aiLabels[pred];
+  resultEl.textContent = label;
+  const colors = { 'Bình thường': '#27ae60', 'Hoạt động nhẹ': '#f39c12', 'Hoạt động trung bình': '#e67e22', 'Hoạt động mạnh': '#d35400', 'Cảnh báo sức khỏe không ổn định': '#e74c3c', 'Nhịp tim cao bất thường': '#c0392b', 'Sức khỏe siêu tốt': '#2ecc71', 'Cảnh báo nguy hiểm': '#8e44ad' };
+  const color = colors[label] || '#2c3e50';
+  resultEl.style.color = 'white';
+  resultEl.style.background = color;
+  resultEl.style.border = 'none';
+  resultEl.style.boxShadow = `0 0 20px ${color}80`;
+});

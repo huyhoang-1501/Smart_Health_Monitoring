@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <Adafruit_SH110X.h>  
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include "MAX30100_PulseOximeter.h"
@@ -13,8 +13,8 @@
 #include <HardwareSerial.h>
 
 // ===== Thông tin WiFi và Firebase =====
-#define WIFI_SSID "Huy Hoang"
-#define WIFI_PASSWORD "cudiroiseden"
+#define WIFI_SSID "Phong Tro Tang 3.2"
+#define WIFI_PASSWORD "99999999"
 #define API_KEY "AIzaSyD3_MWJ-A5wkar9UdDEjo0EuTTmmjxs-vo"
 #define DATABASE_URL "https://project-2-health-default-rtdb.asia-southeast1.firebasedatabase.app"
 
@@ -29,9 +29,9 @@ bool signUp = false;
 #define SCREEN_HEIGHT 64
 #define OLED_MOSI   23
 #define OLED_CLK    18
-#define OLED_CS   5
-#define OLED_DC   15
-#define OLED_RST  4
+#define OLED_CS     5
+#define OLED_DC     15
+#define OLED_RST    4
 
 // I2C Pins cho MAX30100 và MPU6050
 #define I2C_SDA 21
@@ -41,8 +41,9 @@ bool signUp = false;
 #define A7682S_RX 16
 #define A7682S_TX 17
 
-//Chân GPIO cảnh báo
+// Chân GPIO cảnh báo
 #define PIN_OUT 2
+
 // Keypad 4x4
 const byte ROWS = 4;
 const byte COLS = 4;
@@ -54,17 +55,21 @@ char keys[ROWS][COLS] = {
 };
 byte rowPins[4] = {27,14,12,13};
 byte colPins[4] = {32,33,25,26};
-//Khởi tạo đối tượng 
-// OLED
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, OLED_MOSI, OLED_CLK, OLED_DC, OLED_RST, OLED_CS);
+
+// Khởi tạo đối tượng 
+// OLED - DÙNG SH1106G
+Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, OLED_MOSI, OLED_CLK, OLED_DC, OLED_RST, OLED_CS);
+
 // MAX30100
 PulseOximeter pox;
+
 // MPU6050
 Adafruit_MPU6050 mpu;
+
 // Keypad matrix 4x4
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+
 // SIM A7682S
-// ===== UART1 cho A7682S =====
 HardwareSerial A7682S(1); // UART1
 
 // Biến thời gian đo
@@ -75,7 +80,7 @@ float bpm = 0, spo2 = 0;
 float pre_bpm = 0, pre_spo2 = 0; // lưu giá trị cũ
 int pre_steps = 0;
 
-//  Biến để đếm bước chân
+// Biến để đếm bước chân
 const float threshold = 1.0;   // ngưỡng cho người lớn tuổi
 const int bufferLength = 15;
 float buffer[bufferLength];
@@ -103,6 +108,7 @@ void sendAT(String cmd) {
   A7682S.println(cmd);
   Serial.println(">> " + cmd);
 }
+
 // ===== Callback cập nhật mỗi khi có nhịp tim =====
 void onBeatDetected() {
   Serial.println("Nhịp tim!");
@@ -113,7 +119,7 @@ void giao_dien_hien_thi() {
   display.clearDisplay();
   
   display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
+  display.setTextColor(SH110X_WHITE);  // <-- Thay SSD1306_WHITE → SH110X_WHITE
   display.setCursor(0, 0);
   display.println("Smart Health Monitor");
 
@@ -150,16 +156,17 @@ void giao_dien_hien_thi() {
   display.setCursor(104, 40);
   display.print("---");
   
-  //Gợi ý nhấn nút "*"
+  // Gợi ý nhấn nút "*"
   display.setCursor(0, 54);
   display.println("Nhan '*' de nhap SDT");
   display.display();
 }
+
 // ===== Hiển thị màn hình nhập =====
 void giao_dien_nhap_sdt() {
   display.clearDisplay();
   display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
+  display.setTextColor(SH110X_WHITE);  // <-- Thay
   display.setCursor(0,0);
   display.println("Nhap so:");
   display.setTextSize(2);
@@ -180,13 +187,14 @@ void giao_dien_nhap_sdt() {
 void man_hinh_luu() {
   display.clearDisplay();
   display.setTextSize(2);
-  display.setTextColor(SSD1306_WHITE);
+  display.setTextColor(SH110X_WHITE);  // <-- Thay
   display.setCursor(15, 20);
   display.println("Da luu!");
   display.display();
 }
 
-void guiLenFirebase()
+// Gửi dữ liệu cảm biến lên Firebase và đọc số điện thoại từ trên Firebase
+void gui_va_doc_du_lieu()
 {
   if (Firebase.ready() && signUp)
   {
@@ -194,14 +202,7 @@ void guiLenFirebase()
     Firebase.RTDB.setFloat(&fbdo, "/parameter/heartbeat", bpmRounded);
     Firebase.RTDB.setFloat(&fbdo, "/parameter/spo2", spo2);
     Firebase.RTDB.setInt(&fbdo, "/parameter/steps", stepCount);
-
-    Serial.printf("Gửi Firebase: HR=%.1f bpm | SpO2=%.1f%% | Steps=%d\n", bpm, spo2, stepCount);
-  }
-}
-
-void docTuFirebase() {
-  if (Firebase.ready() && signUp) {
-    if (Firebase.RTDB.getString(&fbdo, "/user/phone/sdt")) {
+     if (Firebase.RTDB.getString(&fbdo, "/user/phone/sdt")) {
       if (fbdo.dataType() == "string") {
         String sdt = fbdo.stringData();
         Serial.print(" Số điện thoại đọc được từ Firebase: ");
@@ -209,10 +210,13 @@ void docTuFirebase() {
         if (sdt.length() == 10)
         savedNumbers = sdt;
       }
-    } else {
+    }else 
+    {
       Serial.print(" Lỗi khi đọc dữ liệu: ");
       Serial.println(fbdo.errorReason());
     }
+    
+    Serial.printf("Gửi Firebase: HR=%.1f bpm | SpO2=%.1f%% | Steps=%d\n", bpm, spo2, stepCount);
   }
 }
 
@@ -228,12 +232,12 @@ void xu_li_man_hinh_nhap()
         giao_dien_nhap_sdt();
       }
     }
-    // 🔹 Nút B: Xóa 1 ký tự cuối
+    // Nút B: Xóa 1 ký tự cuối
     else if (key2 == 'B' && phoneNumber.length() > 0) {
       phoneNumber.remove(phoneNumber.length() - 1);
       giao_dien_nhap_sdt();
     }
-    // 🔹 Nút D: Lưu số
+    // Nút D: Lưu số
     else if (key2 == 'D' && phoneNumber.length() > 0) {
       savedNumbers = phoneNumber;
       Serial.println("Đã lưu số mới: " + savedNumbers);
@@ -243,7 +247,7 @@ void xu_li_man_hinh_nhap()
       giao_dien_hien_thi();
       break;
     }
-    // 🔹 Nút *: Thoát nhập
+    // Nút *: Thoát nhập
     else if (key2 == '*') {
       inInputMode = false;
       giao_dien_hien_thi();
@@ -295,6 +299,7 @@ void reset_cac_bien_do(){
       measuring = true;
       stepCount = 0;
 }
+
 void dem_buoc_chan()
 {
   // -------- MPU6050 Step Counter --------
@@ -324,7 +329,7 @@ void dem_buoc_chan()
 
       Serial.print("Step detected! Count = ");
       Serial.println(stepCount);
-      display.fillRect(104, 40, 24, 8, SSD1306_BLACK);
+      display.fillRect(104, 40, 24, 8, SH110X_BLACK);  // <-- Thay SSD1306_BLACK → SH110X_BLACK
       display.setCursor(104, 40);
       display.print(stepCount);
       display.display();
@@ -342,7 +347,7 @@ void xu_li_va_hien_thi_thong_so() {
     if (remaining < 0) remaining = 0;
 
     // Hiển thị đếm ngược thời gian
-    display.fillRect(36, 10, 50, 10, SSD1306_BLACK);
+    display.fillRect(36, 10, 50, 10, SH110X_BLACK);  // <-- Thay
     display.setCursor(36, 10);
     display.print(remaining);
     display.print("s");
@@ -353,8 +358,8 @@ void xu_li_va_hien_thi_thong_so() {
       bpm = pox.getHeartRate();
       spo2 = pox.getSpO2();
       // Xóa vùng hiển thị cũ
-      display.fillRect(24, 20, 52, 8, SSD1306_BLACK);
-      display.fillRect(36, 30, 44, 8, SSD1306_BLACK);
+      display.fillRect(24, 20, 52, 8, SH110X_BLACK);  // <-- Thay
+      display.fillRect(36, 30, 44, 8, SH110X_BLACK);  // <-- Thay
 
       // Hiển thị HR mới
       display.setCursor(24, 20);
@@ -369,18 +374,18 @@ void xu_li_va_hien_thi_thong_so() {
       // ======= HIỂN THỊ BƯỚC CHÂN =======
       // Cập nhật Pre Steps
       pre_steps = stepCount;
-      display.fillRect(42, 40, 36, 8, SSD1306_BLACK);
+      display.fillRect(42, 40, 36, 8, SH110X_BLACK);  // <-- Thay
       display.setCursor(42, 40);
       display.print(pre_steps);
       display.display();
 
       // ======= CẬP NHẬT HR, SpO2 CŨ (Pre) =======
-      display.fillRect(104, 20, 24, 8, SSD1306_BLACK);
+      display.fillRect(104, 20, 24, 8, SH110X_BLACK);  // <-- Thay
       display.setCursor(104, 20);
       if (pre_bpm > 30 && pre_bpm < 200) display.printf("%.0f", pre_bpm);
       else display.print("---");
 
-      display.fillRect(104, 30, 24, 8, SSD1306_BLACK);
+      display.fillRect(104, 30, 24, 8, SH110X_BLACK);  // <-- Thay
       display.setCursor(104, 30);
       if (pre_spo2 > 50 && pre_spo2 <= 100) display.printf("%.0f", pre_spo2);
       else display.print("---");
@@ -394,14 +399,13 @@ void xu_li_va_hien_thi_thong_so() {
       Serial.printf("Ket qua: HR=%.0f bpm | SpO2=%.0f%% | Steps=%d\n", bpm, spo2, stepCount);
       if (bpm < 50 || bpm > 100) bpm_warning ++;
       if (pre_steps <= 80) step_warning ++;
-      guiLenFirebase();
+      gui_va_doc_du_lieu();
       delay(1000);
     }
   }
 }
 
-
-//Hàm cảnh bảo
+// Hàm cảnh báo
 void canh_bao_suc_khoe()
 {
  if (bpm_warning >= 3 || step_warning >= 2)
@@ -410,7 +414,7 @@ void canh_bao_suc_khoe()
     {
       warning_enable = true;
       warningStartTime = millis(); // Lưu thời điểm bắt đầu
-      //digitalWrite(PIN_OUT, HIGH);
+      digitalWrite(PIN_OUT, HIGH);
       digitalWrite(LED_BUILTIN, HIGH);
       Serial.println("Cảnh báo sức khỏe kích hoạt!");
     }
@@ -418,17 +422,17 @@ void canh_bao_suc_khoe()
     {
      unsigned long elapsed = millis() - warningStartTime;
 
-     // Nếu quá 2 phút 30s mà chưa tắt => tự động gọi
+     // Nếu quá 1 phút 30s mà chưa tắt => tự động gọi
      if (elapsed >= WARNING_DURATION)
      {
-      Serial.println("Quá 150s, thực hiện cuộc gọi khẩn cấp...");
+      Serial.println("Quá 90s, thực hiện cuộc gọi khẩn cấp...");
       sendAT("AT+CHUP");       // Dừng cuộc gọi cũ nếu có
       delay(1000);
       sendAT("AT+CREG?");
       delay(1000);
       sendAT("ATD" + savedNumbers + ";");
       warning_enable = false;  // Reset cảnh báo sau khi gọi
-      //digitalWrite(PIN_OUT, LOW);
+      digitalWrite(PIN_OUT, LOW);
       digitalWrite(LED_BUILTIN, LOW);
       bpm_warning = 0;
       step_warning = 0;
@@ -436,15 +440,19 @@ void canh_bao_suc_khoe()
     }
   }
 }
+
 // ===== Khởi tạo =====
 void setup() {
   Serial.begin(115200);
   delay(1000);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(PIN_OUT, OUTPUT);
+
   // A7682S
   A7682S.begin(115200, SERIAL_8N1, A7682S_RX, A7682S_TX);
-  // OLED
-  if(!display.begin(SSD1306_SWITCHCAPVCC)) {
+
+  // OLED - DÙNG SH1106G
+  if(!display.begin()) {  // <-- Thay SSD1306_SWITCHCAPVCC → begin() không cần tham số
     Serial.println(F("Lỗi OLED!"));
     while (1);
   }
@@ -457,6 +465,7 @@ void setup() {
   Serial.println("MPU6050 OK.");
   mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+
   // ===== WiFi =====
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Đang kết nối WiFi");
@@ -479,13 +488,16 @@ void setup() {
   config.token_status_callback = tokenStatusCallback;
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
+
   // MAX30100
   if (!pox.begin()) {
     Serial.println("Loi khoi dong MAX30100");
     while (1);
   }
   pox.setOnBeatDetectedCallback(onBeatDetected);
+
   giao_dien_hien_thi();
+
   // Bắt đầu đo
   measuring = true;
   startTime = millis();
