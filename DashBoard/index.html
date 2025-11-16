@@ -7,13 +7,18 @@
   <title>Smart Health Monitoring</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="icon" href="image/logo.png" type="image/png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="header">
-    <img src="health.png" id="logo" alt="Smart Health Monitoring Logo">
+    <img src="image/health.png" id="logo" alt="Smart Health Monitoring Logo">
     <div id="header-title"></div>
+    <!-- Thêm logo HCMUTE bên phải -->
+    <div id="logo-hcmute">
+      <img src="image/logo_spkt.png" alt="HCMUTE Logo">
+      <span>HCMUTE</span>
+    </div>
   </div>
 
   <!-- Menu xổ ra khi click logo -->
@@ -50,7 +55,7 @@
       <div class="sensor-box">
         <div class="sensor-icon"><i class="fas fa-heartbeat"></i></div>
         <h2>Nhịp tim</h2>
-        <p id="heartbeat">0 bpm</p>
+        <p id="image/heartbeat">0 bpm</p>
       </div>
       <div class="sensor-box">
         <div class="sensor-icon"><i class="fas fa-shoe-prints"></i></div>
@@ -85,7 +90,6 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-database.js"></script>
-
   <!-- Function chính -->
   <script src="function.js"></script>
 </body>
