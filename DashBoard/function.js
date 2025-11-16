@@ -17,8 +17,8 @@ async function loadAIModel() {
   const status = document.getElementById('ai-status');
   if (!status) return;
 
-  status.textContent = "Đang tải AI model...";
-  status.style.color = "orange";
+ status.textContent = "AI sẵn sàng! Dự đoán ngay";
+  status.style.color = "green";
 
   try {
     console.log("Bắt đầu load model...");
@@ -300,8 +300,9 @@ document.getElementById('ai-predict-btn')?.addEventListener('click', async () =>
     'Cảnh báo nguy hiểm': '#8e44ad'
   };
   const color = colors[label] || '#2c3e50';
-  resultEl.style.color = 'white';
-  resultEl.style.background = color;
-  resultEl.style.border = 'none';
-  resultEl.style.boxShadow = `0 0 20px ${color}80`;
+resultEl.textContent = label;
+resultEl.style.color = 'white';
+resultEl.style.background = color;
+resultEl.style.border = 'none';
+resultEl.style.boxShadow = `0 0 20px ${color}80`;
 });
