@@ -1,0 +1,138 @@
+Added Component: Designator=Ban Phim(HDR1X8)
+Add component (AddParameter): Name = "LatestRevisionDate"; Value = "17-Jul-2002"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "LatestRevisionNote"; Value = "Re-released for DXP Platform."; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Publisher"; Value = "Altium Limited"; VariantName = "[No Variations]"
+Added Component: Designator=C1(CP1.5/3.4)
+Add component (AddParameter): Name = "Description 1"; Value = "1000uF/6,3V - 470uF/16V - 330uF - 25V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 2"; Value = "220uF/35V - 100uF/50V - 63V - 4,7uF/200V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 3"; Value = "22uF => 33uF100V - 3,3uF => 4,7uF/250V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 4"; Value = "2,2uF =>3,3uF/350 - 2,2uF/400V - 1uF/450V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "100uF/35V/50V"; VariantName = "[No Variations]"
+Added Component: Designator=C2(CN1)
+Add component (AddParameter): Name = "Value"; Value = "100pF"; VariantName = "[No Variations]"
+Added Component: Designator=C3(CP1.5/3.4)
+Add component (AddParameter): Name = "Description 1"; Value = "1000uF/6,3V - 470uF/16V - 330uF - 25V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 2"; Value = "220uF/35V - 100uF/50V - 63V - 4,7uF/200V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 3"; Value = "22uF => 33uF100V - 3,3uF => 4,7uF/250V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 4"; Value = "2,2uF =>3,3uF/350 - 2,2uF/400V - 1uF/450V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "100uF/35V/50V"; VariantName = "[No Variations]"
+Added Component: Designator=C4(CN1)
+Add component (AddParameter): Name = "Value"; Value = "100pF"; VariantName = "[No Variations]"
+Added Component: Designator=C5(CN1)
+Add component (AddParameter): Name = "Value"; Value = "100pF"; VariantName = "[No Variations]"
+Added Component: Designator=C6(CN1)
+Add component (AddParameter): Name = "Value"; Value = "100pF"; VariantName = "[No Variations]"
+Added Component: Designator=MAX30100(HDR1X4)
+Add component (AddParameter): Name = "LatestRevisionDate"; Value = "17-Jul-2002"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "LatestRevisionNote"; Value = "Re-released for DXP Platform."; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Publisher"; Value = "Altium Limited"; VariantName = "[No Variations]"
+Added Component: Designator=ModuleSIM(HDR1X5)
+Add component (AddParameter): Name = "LatestRevisionDate"; Value = "17-Jul-2002"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "LatestRevisionNote"; Value = "Re-released for DXP Platform."; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Publisher"; Value = "Altium Limited"; VariantName = "[No Variations]"
+Added Component: Designator=MPU6050(HDR1X4)
+Add component (AddParameter): Name = "LatestRevisionDate"; Value = "17-Jul-2002"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "LatestRevisionNote"; Value = "Re-released for DXP Platform."; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Publisher"; Value = "Altium Limited"; VariantName = "[No Variations]"
+Added Component: Designator=Ngu?n?(HED2)
+Add component (AddParameter): Name = "Value"; Value = "Header 2"; VariantName = "[No Variations]"
+Added Component: Designator=OLED(HDR1X7)
+Add component (AddParameter): Name = "LatestRevisionDate"; Value = "17-Jul-2002"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "LatestRevisionNote"; Value = "Re-released for DXP Platform."; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Publisher"; Value = "Altium Limited"; VariantName = "[No Variations]"
+Added Component: Designator=RELAY(HDR1X3)
+Add component (AddParameter): Name = "LatestRevisionDate"; Value = "17-Jul-2002"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "LatestRevisionNote"; Value = "Re-released for DXP Platform."; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Publisher"; Value = "Altium Limited"; VariantName = "[No Variations]"
+Added Component: Designator=U1(ESP32-DEVKIT-V1.0-38PIN)
+Added Pin To Net: NetName=+5 Pin=C1-1
+Added Pin To Net: NetName=+5 Pin=C2-2
+Added Pin To Net: NetName=+5 Pin=Ngu?n?-1
+Added Pin To Net: NetName=+5 Pin=U1-19
+Added Net: Name=+5
+Added Pin To Net: NetName=3.3V Pin=C3-1
+Added Pin To Net: NetName=3.3V Pin=C4-2
+Added Pin To Net: NetName=3.3V Pin=C5-1
+Added Pin To Net: NetName=3.3V Pin=C6-1
+Added Pin To Net: NetName=3.3V Pin=MAX30100-1
+Added Pin To Net: NetName=3.3V Pin=MPU6050-1
+Added Pin To Net: NetName=3.3V Pin=OLED-2
+Added Pin To Net: NetName=3.3V Pin=U1-1
+Added Net: Name=3.3V
+Added Pin To Net: NetName=CLK Pin=OLED-3
+Added Pin To Net: NetName=CLK Pin=U1-30
+Added Net: Name=CLK
+Added Pin To Net: NetName=CS Pin=OLED-7
+Added Pin To Net: NetName=CS Pin=U1-29
+Added Net: Name=CS
+Added Pin To Net: NetName=DC Pin=OLED-6
+Added Pin To Net: NetName=DC Pin=U1-23
+Added Net: Name=DC
+Added Pin To Net: NetName=GND Pin=C1-2
+Added Pin To Net: NetName=GND Pin=C2-1
+Added Pin To Net: NetName=GND Pin=C3-2
+Added Pin To Net: NetName=GND Pin=C4-1
+Added Pin To Net: NetName=GND Pin=C5-2
+Added Pin To Net: NetName=GND Pin=C6-2
+Added Pin To Net: NetName=GND Pin=MAX30100-2
+Added Pin To Net: NetName=GND Pin=ModuleSIM-5
+Added Pin To Net: NetName=GND Pin=MPU6050-2
+Added Pin To Net: NetName=GND Pin=Ngu?n?-2
+Added Pin To Net: NetName=GND Pin=OLED-1
+Added Pin To Net: NetName=GND Pin=RELAY-2
+Added Pin To Net: NetName=GND Pin=U1-14
+Added Pin To Net: NetName=GND Pin=U1-32
+Added Pin To Net: NetName=GND Pin=U1-38
+Added Net: Name=GND
+Added Pin To Net: NetName=MOSI Pin=OLED-4
+Added Pin To Net: NetName=MOSI Pin=U1-37
+Added Net: Name=MOSI
+Added Pin To Net: NetName=NetBan Phim_1 Pin=Ban Phim-1
+Added Pin To Net: NetName=NetBan Phim_1 Pin=U1-15
+Added Net: Name=NetBan Phim_1
+Added Pin To Net: NetName=NetBan Phim_2 Pin=Ban Phim-2
+Added Pin To Net: NetName=NetBan Phim_2 Pin=U1-13
+Added Net: Name=NetBan Phim_2
+Added Pin To Net: NetName=NetBan Phim_3 Pin=Ban Phim-3
+Added Pin To Net: NetName=NetBan Phim_3 Pin=U1-12
+Added Net: Name=NetBan Phim_3
+Added Pin To Net: NetName=NetBan Phim_4 Pin=Ban Phim-4
+Added Pin To Net: NetName=NetBan Phim_4 Pin=U1-11
+Added Net: Name=NetBan Phim_4
+Added Pin To Net: NetName=NetBan Phim_5 Pin=Ban Phim-5
+Added Pin To Net: NetName=NetBan Phim_5 Pin=U1-10
+Added Net: Name=NetBan Phim_5
+Added Pin To Net: NetName=NetBan Phim_6 Pin=Ban Phim-6
+Added Pin To Net: NetName=NetBan Phim_6 Pin=U1-9
+Added Net: Name=NetBan Phim_6
+Added Pin To Net: NetName=NetBan Phim_7 Pin=Ban Phim-7
+Added Pin To Net: NetName=NetBan Phim_7 Pin=U1-8
+Added Net: Name=NetBan Phim_7
+Added Pin To Net: NetName=NetBan Phim_8 Pin=Ban Phim-8
+Added Pin To Net: NetName=NetBan Phim_8 Pin=U1-7
+Added Net: Name=NetBan Phim_8
+Added Pin To Net: NetName=NetModuleSIM_3 Pin=ModuleSIM-3
+Added Pin To Net: NetName=NetModuleSIM_3 Pin=U1-28
+Added Net: Name=NetModuleSIM_3
+Added Pin To Net: NetName=NetModuleSIM_4 Pin=ModuleSIM-4
+Added Pin To Net: NetName=NetModuleSIM_4 Pin=U1-27
+Added Net: Name=NetModuleSIM_4
+Added Pin To Net: NetName=RELAY Pin=RELAY-3
+Added Pin To Net: NetName=RELAY Pin=U1-24
+Added Net: Name=RELAY
+Added Pin To Net: NetName=RES Pin=OLED-5
+Added Pin To Net: NetName=RES Pin=U1-26
+Added Net: Name=RES
+Added Pin To Net: NetName=SCL Pin=MAX30100-3
+Added Pin To Net: NetName=SCL Pin=MPU6050-3
+Added Pin To Net: NetName=SCL Pin=U1-36
+Added Net: Name=SCL
+Added Pin To Net: NetName=SDA Pin=MAX30100-4
+Added Pin To Net: NetName=SDA Pin=MPU6050-4
+Added Pin To Net: NetName=SDA Pin=U1-33
+Added Net: Name=SDA
+Added Pin To Net: NetName=Vin5V Pin=ModuleSIM-1
+Added Pin To Net: NetName=Vin5V Pin=RELAY-1
+Added Net: Name=Vin5V
+Added Class: Name=Schematic
+Added Room: Name=Schematic

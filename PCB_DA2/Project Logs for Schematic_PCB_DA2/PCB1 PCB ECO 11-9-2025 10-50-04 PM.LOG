@@ -1,0 +1,42 @@
+Removed Pin From Net: NetName=GND Pin=HD1-1
+Removed Pin From Net: NetName=Vin5V Pin=HD1-2
+Removed Pin From Net: NetName=Vin5V Pin=U1-19
+Removed Member From Class: ClassName=Schematic Member=HD1
+Change Component Designator: OldDesignator=C? NewDesignator=C3
+Added Component: Designator=C1(CP1.5/3.4)
+Add component (AddParameter): Name = "Description 1"; Value = "1000uF/6,3V - 470uF/16V - 330uF - 25V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 2"; Value = "220uF/35V - 100uF/50V - 63V - 4,7uF/200V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 3"; Value = "22uF => 33uF100V - 3,3uF => 4,7uF/250V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Description 4"; Value = "2,2uF =>3,3uF/350 - 2,2uF/400V - 1uF/450V"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Value"; Value = "100uF/35V/50V"; VariantName = "[No Variations]"
+Added Component: Designator=C2(CN1)
+Add component (AddParameter): Name = "Value"; Value = "100pF"; VariantName = "[No Variations]"
+Added Component: Designator=C4(CN1)
+Add component (AddParameter): Name = "Value"; Value = "100pF"; VariantName = "[No Variations]"
+Added Component: Designator=C5(CN1)
+Add component (AddParameter): Name = "Value"; Value = "100pF"; VariantName = "[No Variations]"
+Added Component: Designator=C6(CN1)
+Add component (AddParameter): Name = "Value"; Value = "100pF"; VariantName = "[No Variations]"
+Added Component: Designator=Ngu?n?(HED2)
+Add component (AddParameter): Name = "Value"; Value = "Header 2"; VariantName = "[No Variations]"
+Added Pin To Net: NetName=GND Pin=C1-2
+Added Pin To Net: NetName=GND Pin=C2-1
+Added Pin To Net: NetName=GND Pin=C4-1
+Added Pin To Net: NetName=3.3V Pin=C4-2
+Added Pin To Net: NetName=3.3V Pin=C5-1
+Added Pin To Net: NetName=GND Pin=C5-2
+Added Pin To Net: NetName=3.3V Pin=C6-1
+Added Pin To Net: NetName=GND Pin=C6-2
+Added Pin To Net: NetName=GND Pin=Ngu?n?-2
+Added Pin To Net: NetName=+5 Pin=C1-1
+Added Pin To Net: NetName=+5 Pin=C2-2
+Added Pin To Net: NetName=+5 Pin=Ngu?n?-1
+Added Pin To Net: NetName=+5 Pin=U1-19
+Added Net: Name=+5
+Added Member To Class: ClassName=Schematic Member=Component C1 100uF/25V
+Added Member To Class: ClassName=Schematic Member=Component C2 104
+Added Member To Class: ClassName=Schematic Member=Component C4 104
+Added Member To Class: ClassName=Schematic Member=Component C5 104
+Added Member To Class: ClassName=Schematic Member=Component C6 104
+Added Member To Class: ClassName=Schematic Member=Component Ngu?n? Header 2
+Added Room: Name=Schematic

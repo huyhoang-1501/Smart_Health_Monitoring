@@ -1,0 +1,19 @@
+Removed Pin From Net: NetName=NetBan Phim_8 Pin=U1-3
+Removed Pin From Net: NetName=NetBan Phim_7 Pin=U1-4
+Removed Pin From Net: NetName=NetBan Phim_6 Pin=U1-5
+Removed Pin From Net: NetName=NetBan Phim_5 Pin=U1-6
+Removed Pin From Net: NetName=NetBan Phim_4 Pin=U1-7
+Removed Pin From Net: NetName=NetBan Phim_3 Pin=U1-8
+Removed Pin From Net: NetName=NetBan Phim_2 Pin=U1-9
+Removed Pin From Net: NetName=NetBan Phim_1 Pin=U1-10
+Removed Pin From Net: NetName=RELAY Pin=U1-11
+Added Pin To Net: NetName=NetBan Phim_8 Pin=U1-7
+Added Pin To Net: NetName=NetBan Phim_7 Pin=U1-8
+Added Pin To Net: NetName=NetBan Phim_6 Pin=U1-9
+Added Pin To Net: NetName=NetBan Phim_5 Pin=U1-10
+Added Pin To Net: NetName=NetBan Phim_4 Pin=U1-11
+Added Pin To Net: NetName=NetBan Phim_3 Pin=U1-12
+Added Pin To Net: NetName=NetBan Phim_2 Pin=U1-13
+Added Pin To Net: NetName=NetBan Phim_1 Pin=U1-15
+Added Pin To Net: NetName=RELAY Pin=U1-24
+Added Room: Name=Schematic

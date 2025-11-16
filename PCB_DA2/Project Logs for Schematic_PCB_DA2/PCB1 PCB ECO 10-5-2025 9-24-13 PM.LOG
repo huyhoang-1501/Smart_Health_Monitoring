@@ -1,0 +1,7 @@
+Added Pin To Net: NetName=NetModuleSIM_3 Pin=ModuleSIM-3
+Added Pin To Net: NetName=NetModuleSIM_3 Pin=U1-28
+Added Net: Name=NetModuleSIM_3
+Added Pin To Net: NetName=NetModuleSIM_4 Pin=ModuleSIM-4
+Added Pin To Net: NetName=NetModuleSIM_4 Pin=U1-27
+Added Net: Name=NetModuleSIM_4
+Added Room: Name=Schematic
