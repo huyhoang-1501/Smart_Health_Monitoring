@@ -5,20 +5,29 @@ document.getElementById("logo").addEventListener("click", () => {
 
 // Cập nhật thời gian thực ở header
 const timeElement = document.getElementById('header-title');
+// CẬP NHẬT THỜI GIAN - CÓ : - KHOẢNG CÁCH BÌNH THƯỜNG
 function updateTime() {
   const now = new Date();
-  timeElement.textContent = now.toLocaleString('vi-VN', { 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    second: '2-digit',
+  const dateStr = now.toLocaleDateString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
-  }); // Hiển thị thời gian đầy đủ theo định dạng Việt Nam
-}
-setInterval(updateTime, 1000);
-updateTime(); // Gọi ngay lập tức để hiển thị thời gian ban đầu
+  });
+    const timeStr = now.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
 
+  // Gán trực tiếp
+  document.getElementById('date').textContent = dateStr;
+  document.getElementById('time').textContent = timeStr;
+}
+
+// Chạy ngay + mỗi giây
+updateTime();
+setInterval(updateTime, 1000);
 // Hiện nội dung theo lựa chọn
 function showSection(section) {
   // Ẩn menu
