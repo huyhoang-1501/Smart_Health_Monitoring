@@ -3,12 +3,27 @@ body {
   font-size: 28px;
   width: 100%;
   margin: 0px auto;
-  background-image: url('D:/DA2/DashBoard/dai-hoc-su-pham-ky-thuat-tp-hcm.jpg;'); 
-  background-size: cover; /* Đặt kích thước hình ảnh phủ toàn bộ màn hình */
-  background-position: center; /* Căn giữa hình ảnh */
-  background-repeat: no-repeat; /* Không lặp lại hình ảnh */
-  background-attachment: fixed; /* Giữ hình ảnh cố định khi cuộn */
+  background-image: url('image/SPKT.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(1px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 #header {
@@ -16,34 +31,87 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background-color: rgb(59, 182, 193);
+  background: linear-gradient(to right, #00a0b0, #007a8c); /* Xanh nước biển đậm */
   font-family: Arial, sans-serif;
-  animation: textPulse 2s infinite;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  height: 60px;
+  overflow: hidden;
 }
 
+/* Logo trái */
 #logo {
-  height: 40px;
+  height: 38px;
+  flex-shrink: 0;
 }
 
+/* === THỜI GIAN GIỮA: CĂN CHÍNH GIỮA HOÀN HẢO === */
 #header-title {
-  flex: 1;
-  text-align: center;
-  font-size: 24px;
-  font-weight: bold;
-  color: white; /* Đổi màu chữ header thành trắng để nổi bật với thời gian thực */
-}
-
-/* Style cho màn hình chào mừng */
-#welcome-section h1 {
-  font-size: 48px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
   font-weight: bold;
   color: white;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Thêm bóng để chữ nổi bật trên background */
-  margin: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
 }
 
-/* Menu popup */
-/* ============ Menu ============ */
+/* === LOGO HCMUTE BÊN PHẢI: KHÔNG NỀN ĐỎ, DỄ NHÌN === */
+#logo-hcmute {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  min-width: 120px;
+  justify-content: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(2px);
+}
+
+#logo-hcmute img {
+  height: 36px;
+  width: auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+#logo-hcmute span {
+  font-family: 'Arial Black', Arial, sans-serif;
+  letter-spacing: 1px;
+  font-size: 16px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* ==================== MÀN HÌNH CHÀO MỪNG ==================== */
+#welcome-section h1 {
+  font-size: 52px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 
+    0 0 15px rgba(0, 212, 170, 0.8),
+    3px 3px 12px rgba(0, 0, 0, 0.9);
+  margin: 0;
+  animation: glow 2s ease-in-out infinite alternate;
+  transform: translateY(-60px);
+  position: relative;
+  z-index: 1;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(2px);
+}
+
+/* ==================== MENU POPUP ==================== */
 #logo-menu {
   position: absolute;
   top: 60px;
@@ -73,19 +141,18 @@ body {
   color: rgb(224, 27, 27);
 }
 
-/* ============ Section ============ */
+/* ==================== SECTION ==================== */
 .section {
   display: flex;
   flex-direction: column;
-  justify-content: center; /* căn giữa dọc */
-  align-items: center;     /* căn giữa ngang */
+  justify-content: center;
+  align-items: center;
   text-align: center;
   padding: 20px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1); /* Làm mờ để hòa hợp với background */
+  background: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   min-height: 80vh;
-  backdrop-filter: blur(10px); /* Hiệu ứng blur cho section trên background */
 }
 
 #input-section h2 {
@@ -100,17 +167,17 @@ body {
   font-size: 18px;
   border: 3px solid #ccc;
   border-radius: 6px;
-  width: 280px;              /* độ rộng khớp gần bằng với tiêu đề */
-  max-width: 90%;            /* không bị tràn màn hình */
+  width: 280px;
+  max-width: 90%;
   text-align: center;
   display: block;
-  margin: 0 auto 20px auto;  /* căn giữa + cách dưới */
+  margin: 0 auto 20px auto;
 }
 
 .button-group {
   display: flex;
-  justify-content: center;   /* căn giữa 2 nút */
-  gap: 15px;                 /* khoảng cách giữa 2 nút */
+  justify-content: center;
+  gap: 15px;
 }
 
 button {
@@ -131,16 +198,15 @@ button[type="submit"] {
   background-color: rgb(255, 2, 2);
 }
 
-/* Ẩn/hiện điều khiển bằng class hidden */
 .hidden {
   display: none !important;
 }
 
-/* Hàng cảm biến */
+/* ==================== CẢM BIẾN ==================== */
 .sensor-row {
   display: flex;
-  justify-content: center;   /* căn giữa */
-  gap: 2.5rem;               /* khoảng cách giữa các box */
+  justify-content: center;
+  gap: 2.5rem;
   margin-bottom: 2rem;
   width: 100%;
 }
@@ -171,11 +237,11 @@ button[type="submit"] {
   font-weight: bold;
 }
 
-/* Hàng biểu đồ */
+/* ==================== BIỂU ĐỒ ==================== */
 .chart-row {
   display: flex;
-  justify-content: center;   /* căn giữa */
-  gap: 1.5rem;               /* khoảng cách giữa các box */
+  justify-content: center;
+  gap: 1.5rem;
   width: 100%;
 }
 
@@ -199,8 +265,8 @@ button[type="submit"] {
   height: 200px !important;
 }
 
-/* Animation cho header */
-@keyframes textPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+/* ==================== KEYFRAMES ==================== */
+@keyframes glow {
+  from { text-shadow: 0 0 10px rgba(0, 212, 170, 0.6); }
+  to { text-shadow: 0 0 20px rgba(0, 212, 170, 1), 0 0 30px rgba(0, 212, 170, 0.8); }
 }
