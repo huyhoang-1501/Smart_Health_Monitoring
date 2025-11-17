@@ -1,0 +1,44 @@
+# Core
+numpy==1.24.3
+pandas==2.0.3
+scikit-learn==1.3.2
+matplotlib==3.7.2
+seaborn==0.12.2
+
+# Machine Learning Frameworks
+tensorflow==2.13.0
+# hoặc nếu bạn dùng CPU only (nhẹ hơn)
+# tensorflow-cpu==2.13.0
+
+keras==2.13.1
+
+# ONNX & ONNX Runtime
+onnx==1.15.0
+onnxruntime==1.16.3
+
+# Convert Keras → TFJS (nếu cần)
+tensorflowjs==4.17.0
+
+# Convert Keras → ONNX
+tf2onnx==1.16.1
+
+# Jupyter & Debugging
+jupyterlab==4.0.7
+ipython==8.15.0
+
+# 1. Create a virtual environment (recommended)
+python -m venv health_env
+health_envScriptsactivate # Windows
+# source health_env/bin/activate # Linux/Mac
+
+# 2. Install everything
+pip install -r requirements.txt
+
+# 3. Run model training
+python train_model.py
+
+# 4. Convert to ONNX (works best on the web)
+python -m tf2onnx.convert --saved-model saved_model_hr_spo2 --output hr_spo2_model.onnx
+
+# 5. (Optional) Convert to TFJS if desired
+tensorflowjs_converter --input_format=keras saved_model_hr_spo2/model.h5 tfjs_model_final
