@@ -4,53 +4,73 @@
     <img src="https://img.shields.io/badge/Microcontroller-ESP32-blueviolet?style=for-the-badge&logo=espressif&logoColor=white" alt="ESP32">
     <img src="https://img.shields.io/badge/Sensor-MAX30100-red?style=for-the-badge&logo=heartbeat&logoColor=white" alt="MAX30100">
     <img src="https://img.shields.io/badge/Sensor-MPU6050-orange?style=for-the-badge&logo=accelerometer&logoColor=white" alt="MPU6050">
-    <img src="https://img.shields.io/badge/Display-SSD1306%20OLED-blue?style=for-the-badge&logo=display&logoColor=white" alt="OLED">
+    <img src="https://img.shields.io/badge/Display-SH110X%20128x64%20OLED-blue?style=for-the-badge&logo=display&logoColor=white" alt="SH110X OLED">
     <img src="https://img.shields.io/badge/Keypad-4x4%20Matrix-green?style=for-the-badge&logo=keyboard&logoColor=white" alt="Keypad">
     <img src="https://img.shields.io/badge/GSM-A7682S-yellow?style=for-the-badge&logo=signal&logoColor=white" alt="A7682S">
     <img src="https://img.shields.io/badge/Cloud-Firebase-critical?style=for-the-badge&logo=firebase&logoColor=white" alt="Firebase">
+    <img src="https://img.shields.io/badge/AI-ONNX%20Inference-success?style=for-the-badge&logo=tensorflow&logoColor=white" alt="AI ONNX">
     <img src="https://img.shields.io/badge/Language-C%2B%2B-blue?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++">
   </p>
   ---
   <p>
     <a href="#-overview">Overview</a> •
     <a href="#-key-features">Key Features</a> •
+    <a href="#-ai-health-prediction">AI Health Prediction</a> •
     <a href="#-setup-guide">Setup Guide</a> •
     <a href="#-web-dashboard">Web Dashboard</a> •
-    <a href="#-development-team">Development Team</a>
+    <a href="#-development-team">Team</a>
   </p>
   ---
 </div>
 <br>
 
 ## Overview
-**`Smart Health Monitoring System`** is an **intelligent health monitoring solution** built on **ESP32**, designed specifically for **elderly care**. It continuously tracks vital signs and **automatically alerts emergencies**.
+**Smart Health Monitoring System** is an intelligent IoT-based solution designed specifically for **elderly care**. Powered by the **ESP32**, it continuously monitors vital signs, uses **on-device AI** to predict health status, and automatically triggers emergency calls when critical conditions are detected.
 
-The system measures:
-- **Heart Rate (HR)** and **Blood Oxygen (SpO₂)** via **MAX30100**
-- **Step Count** using **MPU6050** accelerometer
-- **Real-time data upload** to **Firebase Realtime Database**
-- **Auto emergency call** on abnormality detection (via **A7682S GSM module**)
-- **Live display** on **128x64 OLED (SPI)**
-- **Emergency number input** via **4x4 keypad**
-- **Remote monitoring** through a **Web Dashboard** with real-time charts
+**Real-time monitoring includes:**
+- Heart Rate (HR) & Blood Oxygen Saturation (SpO₂) → MAX30100
+- Step counting → MPU6050 (6-axis IMU)
+- Live data streaming to **Firebase Realtime Database**
+- **AI-powered health classification** (8 classes) using ONNX Runtime in browser
+- Automatic emergency call via **A7682S GSM module**
+- Clear local display on **SH110X 128×64 OLED**
+- Emergency contact input via **4×4 matrix keypad**
 
-> **Use Case**: Home health monitoring for seniors — early detection of heart issues & sedentary behavior.
+> **Target Application**: Home-based health monitoring for seniors — early detection of cardiac issues, hypoxia, and sedentary behavior.
 
 <br>
 
 ## Key Features
 
-| Feature | Description |
-|--------|-------------|
-| **Heart Rate & SpO₂ Monitoring** | Updated every 60 seconds, shown instantly on OLED |
-| **Step Counting** | Moving average filter + threshold-based step detection |
-| **Health Alert System** | Auto-triggered when: <br> • HR < 50 or > 100 (≥3 times) <br> • Steps ≤ 80 (≥2 times) |
-| **Emergency Auto-Call** | Dials saved number after **90 seconds of continuous alert** |
-| **4x4 Keypad Control** | Enter/delete number, mute alert, quick call |
-| **OLED 128x64 SPI Display** | Clear UI: HR, SpO₂, steps, previous values, countdown timer |
-| **Firebase Realtime DB** | Syncs sensor data & emergency contact |
-| **Web Dashboard** | Live charts for HR, SpO₂, and steps |
-| **Manual Alert Mute** | Press **A** to disable alert |
+| Feature                        | Description                                                                                         |
+|--------------------------------|-----------------------------------------------------------------------------------------------------|
+| **Heart Rate & SpO₂ Monitoring** | Updated every 60 seconds, instantly displayed on OLED                                              |
+| **Step Counting**              | Moving-average filter + adaptive threshold algorithm                                               |
+| **Health Alert System**        | Auto-triggered when:<br>• HR < 50 or > 100 (≥3 consecutive times)<br>• Steps ≤ 80 (≥2 times)       |
+| **Emergency Auto-Call**        | Automatically dials saved number after **90 seconds of continuous alert**                          |
+| **4×4 Keypad Control**         | Enter/delete emergency number, mute alarm, manual call                                             |
+| **SH110X 128×64 OLED Display** | High-contrast UI showing HR, SpO₂, steps, previous values, and countdown timer                     |
+| **Firebase Realtime Database** | Synchronizes sensor data and emergency contact in real time                                        |
+| **Web Dashboard**              | Live charts + **AI health prediction** tab                                                          |
+| **Manual Alert Mute**          | Press key **A** to temporarily silence the alarm                                                   |
+
+<br>
+
+## AI Health Prediction (ONNX Runtime Web)
+
+**The most powerful feature of the project — 100% client-side inference, no backend required!**
+
+| Specification                  | Details                                                                                             |
+|--------------------------------|-----------------------------------------------------------------------------------------------------|
+| **Model Architecture**         | Fully-connected Neural Network (64→32→16→8), accuracy **> 98.5%** on test set                       |
+| **Input**                      | 2 features: Heart Rate (BPM) + SpO₂ (%)                                                             |
+| **Output Classes**             | 8 health states:<br>• Normal<br>• Light / Moderate / Intense Activity<br>• Unstable Health<br>• Abnormally High Heart Rate<br>• Excellent Health<br>• **Critical Danger** |
+| **Technology**                 | ONNX Runtime Web (`onnxruntime-web`) — loads in 1–3 s, runs smoothly on any device                 |
+| **Model Files**                | `hr_spo2_model.onnx` (~50 KB) + `scaler.json`                                                       |
+| **Automation**                 | Auto-fetches latest data from Firebase and predicts instantly when entering the AI tab             |
+| **UI**                         | Color-coded result with glowing animation (green = good, red = danger)                              |
+
+**Highlight**: Entire AI runs **in the browser** → maximum privacy, zero server cost, works offline.
 
 <br>
 
@@ -58,57 +78,68 @@ The system measures:
 
 ### Hardware Requirements
 - ESP32 DevKit V1
-- MAX30100 (Pulse Oximeter + Heart Rate)
-- MPU6050 (6-DoF IMU)
-- SSD1306 128x64 OLED (SPI interface)
-- 4x4 Matrix Keypad
+- MAX30100 Pulse Oximeter & Heart Rate Sensor
+- MPU6050 6-DoF Accelerometer/Gyroscope
+- **SH1106 / SH1107 128×64 OLED** (I²C recommended)
+- 4×4 Matrix Keypad
 - A7682S GSM/GPRS Module
-- Buzzer/LED on GPIO2
-- Stable 5V power supply
+- Active buzzer / LED on GPIO2
+- Stable 5 V power supply
 
-### Pinout Configuration
+### Pinout Configuration (SH110X I²C – Recommended)
 
-| Device | ESP32 Pin |
-|--------|----------|
-| OLED (SPI) | MOSI: 23, SCK: 18, CS: 5, DC: 15, RST: 4 |
-| MAX30100 & MPU6050 | SDA: 21, SCL: 22 (I²C) |
-| A7682S (UART1) | RX: 16, TX: 17 |
-| 4x4 Keypad | Rows: 27,14,12,13 – Cols: 32,33,25,26 |
-| Buzzer/Alert | GPIO2 |
+| Device                  | ESP32 Pin           | Note                                      |
+|-------------------------|---------------------|-------------------------------------------|
+| SH110X OLED (I²C)       | SDA: 21, SCL: 22    | Use `U8g2lib` (best SH1106/SH1107 support)|
+| MAX30100 & MPU6050      | SDA: 21, SCL: 22    | Shared I²C bus                            |
+| A7682S (UART1)          | RX: 16, TX: 17      |                                           |
+| 4×4 Keypad              | Rows: 27,14,12,13 – Cols: 32,33,25,26 |                                |
+| Buzzer / Alert          | GPIO2               |                                           |
 
-### Software Requirements
-- **Arduino IDE** (latest version)
-- **Libraries** (install via Library Manager):
+### Required Arduino Libraries
+- `U8g2` by olikraus → **best SH1106/SH1107 support**
+- `Adafruit MPU6050`
+- `MAX30100lib` (oxullo)
+- `Keypad`
+- `Firebase-ESP-Client` (mobizt)
 
-- Adafruit SSD1306
-- Adafruit GFX Library
-- Adafruit MPU6050
-- MAX30100lib (by oxullo)
-- Keypad
-- Firebase-ESP-Client (by mobizt)
-- WiFi (built-in with ESP32)
+### Firebase & Web Setup
+1. Create a Firebase project → enable **Realtime Database**
+2. Copy `apiKey` & `databaseURL` into Arduino code and `firebaseConfig` in `index.html`
+3. Place these two files in the web folder:
+   - `hr_spo2_model.onnx`
+   - `scaler.json`
+4. Deploy via Firebase Hosting, Vercel, Netlify, or GitHub Pages  
+   → Or simply open `index.html` locally (AI still works!)
 
-### Firebase Setup
+<br>
 
-- Create a project at Firebase Console
-- Enable Realtime Database
-- Copy API_KEY and DATABASE_URL
+## Web Dashboard
+- Home page with HCMUTE branding
+- Emergency contact management
+- Three real-time line charts (HR, SpO₂, Steps)
+- **AI Health Prediction tab** – automatic inference with stunning UI
+- Fully responsive (mobile & desktop friendly)
 
-### Web Dashboard Setup
-
-- Open index.html
-- Update firebaseConfig with your project credentials
-- Deploy using Firebase Hosting, Vercel, or GitHub Pages
-
-### Web Dashboard
-
-- **Home: Welcome screen**
-- **Phone Input: Save/delete emergency number**
-- **Data Display: 3 real-time line charts (HR, SpO₂, Steps)**
-- **Fully Responsive: Works on mobile & desktop**
+## Image:
+### Overview:
+![Image](https://github.com/user-attachments/assets/50429869-d153-47e3-ab9e-ad384d849f65)
+### Enter the phone number:
+![Image](https://github.com/user-attachments/assets/0a1dabda-bbf2-48a6-9178-da7479389433)
+### Display health parameters:
+![Image](https://github.com/user-attachments/assets/4361e7e2-2d6a-45c6-8e4f-ba75ed49c63c)
+### AI health prediction:
+![Image](https://github.com/user-attachments/assets/7be2303c-7350-4f8b-a878-4360972f8d56)
+<br>
 
 <div align="center">
-  <p><strong>© 2025 – HCMUTE Senior Project Team</strong></p>
-  <p><i>Nguyễn Phạm Huy Hoàng - 22161125</i> | <i>Trần Nguyễn Gia Huy - 22161129</i></p>
-  <p><em>Monitor health. Alert fast. Keep loved ones safe.</em></p>
+
+**© 2025 – Ho Chi Minh City University of Technology and Education (HCMUTE)**  
+**Electronics & Communication Engineering Technology**
+
+**Nguyễn Phạm Huy Hoàng – 22161125**  
+**Trần Nguyễn Gia Huy – 22161129**
+
+<em>“Monitor health. Alert fast. Keep loved ones safe.”</em>
+
 </div>
