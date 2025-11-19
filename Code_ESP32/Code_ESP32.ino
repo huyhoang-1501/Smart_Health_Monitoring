@@ -15,8 +15,8 @@
 // ===== Thông tin WiFi và Firebase =====
 #define WIFI_SSID "Phong Tro Tang 3.2"
 #define WIFI_PASSWORD "99999999"
-#define API_KEY "AIzaSyD3_MWJ-A5wkar9UdDEjo0EuTTmmjxs-vo"
-#define DATABASE_URL "https://project-2-health-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define API_KEY "AIzaSyDH4COmuxxveRdD9zQXGJ29vHLR8SJuK78"
+#define DATABASE_URL "https://project2-98ad4-default-rtdb.firebaseio.com/"
 
 // Firebase
 FirebaseData fbdo;

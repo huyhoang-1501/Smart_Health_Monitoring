@@ -14,33 +14,25 @@ const aiLabels = [
   'Cảnh báo nguy hiểm'
 ];
 
-// Hàm load AI bằng ONNX – CHẠY NGON TRÊN MỌI MÁY (kể cả Windows)
 async function loadAIModel() {
   const status = document.getElementById('ai-status');
-  if (!status) {
-    console.warn("Không tìm thấy phần tử #ai-status");
-    return;
-  }
+  if (!status) return;
 
   status.textContent = "Đang tải AI (ONNX)...";
   status.style.color = "orange";
 
   try {
-    // Bước 1: Tải model ONNX (file hr_spo2_model.onnx phải cùng thư mục với index.html)
     onnxSession = await ort.InferenceSession.create('hr_spo2_model.onnx');
     console.log("Model ONNX đã tải thành công!");
 
-    // Bước 2: Tải scaler.json
     const scalerResp = await fetch('scaler.json');
     if (!scalerResp.ok) throw new Error("Không tìm thấy scaler.json");
     aiScaler = await scalerResp.json();
     console.log("Scaler loaded thành công!");
 
-    // Thành công
     status.textContent = "AI sẵn sàng! Dự đoán ngay";
     status.style.color = "green";
 
-    // Tự động nhấn nút dự đoán sau khi load xong
     setTimeout(() => {
       const predictBtn = document.getElementById('ai-predict-btn');
       if (predictBtn) predictBtn.click();
@@ -50,12 +42,9 @@ async function loadAIModel() {
     console.error("Lỗi khi tải AI:", err);
     status.textContent = "Lỗi AI: " + err.message;
     status.style.color = "red";
-    // Thử lại sau 5 giây
     setTimeout(loadAIModel, 5000);
   }
 }
-
-// Gọi hàm load ngay khi trang mở
 loadAIModel();
 
 // ================== TỰ ĐỘNG DỰ ĐOÁN KHI CÓ DỮ LIỆU TỪ FIREBASE ==================
@@ -79,17 +68,8 @@ document.getElementById("logo").addEventListener("click", () => {
 // ================== CẬP NHẬT NGÀY GIỜ ==================
 function updateTime() {
   const now = new Date();
-  const dateStr = now.toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-  const timeStr = now.toLocaleTimeString('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
+  const dateStr = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
   document.getElementById('date').textContent = dateStr;
   document.getElementById('time').textContent = timeStr;
@@ -99,24 +79,17 @@ setInterval(updateTime, 1000);
 
 // ================== HIỂN THỊ SECTION ==================
 function showSection(section) {
-  // Đóng menu
   document.getElementById("logo-menu").classList.add("hidden");
-
-  // Ẩn tất cả section
   document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
-
-  // Hiện section được chọn
   const target = document.getElementById(section + "-section");
   if (target) target.classList.remove("hidden");
 
-  // Xử lý riêng cho từng phần
   if (section === "input") {
     document.getElementById("phone-input").value = "";
     document.getElementById("status").textContent = "";
   }
 
   if (section === "ai") {
-    // Lấy dữ liệu realtime từ Firebase và tự động điền + dự đoán
     firebase.database().ref("parameter").once("value").then(snap => {
       const data = snap.val();
       if (data && data.heartbeat !== undefined && data.spo2 !== undefined) {
@@ -124,22 +97,20 @@ function showSection(section) {
         document.getElementById('ai-spo2').value = data.spo2;
         setTimeout(autoPredict, 1000);
       }
-    }).catch(err => {
-      console.error("Lỗi lấy dữ liệu từ Firebase:", err);
-    });
+    }).catch(err => console.error("Lỗi lấy dữ liệu từ Firebase:", err));
   }
 }
 
 // ================== FIREBASE CẤU HÌNH ==================
 const firebaseConfig = {
-  apiKey: "AIzaSyD3_MWJ-A5wkar9UdDEjo0EuTTmmjxs-vo",
-  authDomain: "project-2-health.firebaseapp.com",
-  databaseURL: "https://project-2-health-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "project-2-health",
-  storageBucket: "project-2-health.appspot.com",
-  messagingSenderId: "804061608537",
-  appId: "1:804061608537:web:9c3f975c4d761f48b64f48",
-  measurementId: "G-H421Q9D8ZC"
+  apiKey: "AIzaSyDH4COmuxxveRdD9zQXGJ29vHLR8SJuK78",
+  authDomain: "project2-98ad4.firebaseapp.com",
+  databaseURL: "https://project2-98ad4-default-rtdb.firebaseio.com",
+  projectId: "project2-98ad4",
+  storageBucket: "project2-98ad4.firebasestorage.app",
+  messagingSenderId: "807037680757",
+  appId: "1:807037680757:web:098f72aa9ba8fce1de8c3c",
+  measurementId: "G-BJK9XTJYR6"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -185,7 +156,6 @@ const el = {
 
 let sensorData = { heartbeat: [], steps: [], spo2: [], labels: [] };
 
-// Biểu đồ
 const heartChart = new Chart(document.getElementById('heartChart').getContext('2d'), {
   type: 'line',
   data: { labels: [], datasets: [{ label: 'BPM', data: [], borderColor: '#ff6b6b', backgroundColor: 'rgba(255,107,107,0.2)', fill: true, tension: 0.3 }] },
@@ -204,7 +174,6 @@ const spo2Chart = new Chart(document.getElementById('spo2Chart').getContext('2d'
   options: { responsive: true, scales: { x: { display: false } } }
 });
 
-// Lắng nghe dữ liệu realtime từ Firebase
 db.ref('parameter').on('value', snap => {
   const data = snap.val() || { heartbeat: 0, steps: 0, spo2: 0 };
 
@@ -212,7 +181,6 @@ db.ref('parameter').on('value', snap => {
   el.steps.textContent = data.steps;
   el.spo2.textContent = `${data.spo2} %`;
 
-  // Cập nhật biểu đồ
   sensorData.heartbeat.push(data.heartbeat);
   sensorData.steps.push(data.steps);
   sensorData.spo2.push(data.spo2);
@@ -260,12 +228,10 @@ document.getElementById('ai-predict-btn')?.addEventListener('click', async () =>
     return;
   }
 
-  // Chuẩn hóa dữ liệu
   const input = new Float32Array(2);
   input[0] = (bpm - aiScaler.mean[0]) / aiScaler.scale[0];
   input[1] = (spo2 - aiScaler.mean[1]) / aiScaler.scale[1];
 
-  // Chạy dự đoán
   const feeds = { input: new ort.Tensor('float32', input, [1, 2]) };
   const results = await onnxSession.run(feeds);
   const outputTensor = results[Object.keys(results)[0]];
@@ -292,4 +258,83 @@ document.getElementById('ai-predict-btn')?.addEventListener('click', async () =>
   resultEl.style.textAlign = 'center';
   resultEl.style.boxShadow = `0 0 25px ${colors[label] || '#2c3e50'}99`;
   resultEl.style.transition = 'all 0.4s ease';
+});
+
+// ================== ĐĂNG NHẬP & ĐĂNG KÝ EMAIL + GOOGLE (CHỈ HIỆN WELCOME) ==================
+const auth = firebase.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.NONE); // Phải login lại mỗi lần
+
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// Chuyển form
+document.getElementById("show-register")?.addEventListener("click", e => {
+  e.preventDefault();
+  document.getElementById("login-form").style.display = "none";
+  document.getElementById("register-form").style.display = "block";
+});
+document.getElementById("show-login")?.addEventListener("click", e => {
+  e.preventDefault();
+  document.getElementById("register-form").style.display = "none";
+  document.getElementById("login-form").style.display = "block";
+});
+
+// ĐĂNG KÝ EMAIL
+document.getElementById("register-btn")?.addEventListener("click", () => {
+  const email = document.getElementById("email-register").value.trim();
+  const pass  = document.getElementById("password-register").value;
+
+  if (!email || !pass) return alert("Vui lòng nhập đầy đủ!");
+  if (pass.length < 6) return alert("Mật khẩu phải ≥ 6 ký tự!");
+
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(() => {
+      alert("Đăng ký thành công!");
+      document.getElementById("login-section").style.display = "none";
+      showSection('welcome'); // Chỉ hiện welcome
+    })
+    .catch(err => alert("Lỗi đăng ký: " + err.message));
+});
+
+// ĐĂNG NHẬP EMAIL
+document.getElementById("email-signin-btn")?.addEventListener("click", () => {
+  const email = document.getElementById("email-login").value.trim();
+  const pass  = document.getElementById("password-login").value;
+
+  if (!email || !pass) return alert("Vui lòng nhập email và mật khẩu!");
+
+  auth.signInWithEmailAndPassword(email, pass)
+    .then(() => {
+      document.getElementById("login-section").style.display = "none";
+      showSection('welcome'); // Chỉ hiện welcome
+    })
+    .catch(err => alert("Sai email hoặc mật khẩu!\n" + err.message));
+});
+
+// ĐĂNG NHẬP GOOGLE
+document.getElementById("login-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const btn = document.querySelector(".btn-login");
+  const old = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Đang mở Google...`;
+
+  auth.signInWithPopup(googleProvider)
+    .then(() => {
+      document.getElementById("login-section").style.display = "none";
+      showSection('welcome'); // Chỉ hiện welcome
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = old;
+      alert("Lỗi Google login: " + err.message);
+    });
+});
+
+// Khi reload trang → chỉ hiện welcome (nếu có user thì vẫn chỉ hiện welcome thôi)
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById("login-section").style.display = "none";
+    showSection('welcome'); // Luôn hiện welcome khi đã login
+  }
 });

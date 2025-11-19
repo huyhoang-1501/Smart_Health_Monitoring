@@ -5,14 +5,91 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Health Monitoring</title>
+  <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-auth.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.21.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0/dist/ort.min.js"></script>
   <link rel="icon" href="image/logo.png" type="image/png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- ==================== MÀN HÌNH ĐĂNG NHẬP ==================== -->
+  <div id="login-section">
+    <div class="login-container">
+      <div class="login-header">
+        <img src="image/logo_spkt.png" alt="HCMUTE Logo" class="login-logo">
+        <h1>HCMUTE</h1>
+        <p>Đại học Sư phạm Kỹ thuật TP.HCM</p>
+      </div>
+      
+      <div class="login-box">
+        <div class="login-title">
+          <h2>ĐĂNG NHẬP</h2>
+        </div>
+
+        <!-- PHẦN ĐĂNG NHẬP EMAIL + GOOGLE -->
+        <form id="login-form">
+          <div class="input-group-login">
+            <label>Email</label>
+            <input type="email" id="email-login" placeholder="Nhập email của bạn" autocomplete="off">
+          </div>
+          <div class="input-group-login">
+            <label>Mật khẩu</label>
+            <input type="password" id="password-login" placeholder="Nhập mật khẩu" minlength="6" autocomplete="new-password">
+          </div>
+
+          <button type="button" id="email-signin-btn" class="btn-login" style="background:#2c3e50; margin-bottom:15px;">
+            Đăng nhập bằng Email
+          </button>
+
+          <div style="text-align:center; margin:20px 0; color:#777; font-weight:bold;">HOẶC</div>
+
+          <button type="submit" class="btn-login" style="background:#4285F4;">
+            <i class="fab fa-google" style="margin-right:12px;"></i>
+            Đăng nhập bằng Google
+          </button>
+
+          <p style="margin-top:25px; font-size:15px; color:#555;">
+            Chưa có tài khoản? 
+            <a href="#" id="show-register" style="color:#4285F4; font-weight:bold; text-decoration:underline;">Đăng ký ngay</a>
+          </p>
+
+          <!-- FIX LỖI "Please fill out this field" KHI BẤM GOOGLE -->
+          <div style="display:none;">
+            <input type="text" name="fakeuser">
+            <input type="password" name="fakepass">
+          </div>
+        </form>
+
+        <!-- PHẦN ĐĂNG KÝ (ẨN MẶC ĐỊNH) -->
+        <div id="register-form" style="display:none; margin-top:30px;">
+          <h3 style="color:#2c3e50; margin-bottom:20px;">TẠO TÀI KHOẢN MỚI</h3>
+          <div class="input-group-login">
+            <label>Email</label>
+            <input type="email" id="email-register" placeholder="Nhập email" required autocomplete="off">
+          </div>
+          <div class="input-group-login">
+            <label>Mật khẩu (tối thiểu 6 ký tự)</label>
+            <input type="password" id="password-register" placeholder="Tạo mật khẩu" required minlength="6" autocomplete="new-password">
+          </div>
+          <button type="button" id="register-btn" class="btn-login" style="background:#27ae60;">
+            Đăng ký ngay
+          </button>
+          <p style="margin-top:15px; font-size:14px; color:#555;">
+            Đã có tài khoản? 
+            <a href="#" id="show-login" style="color:#4285F4; font-weight:bold;">Quay lại đăng nhập</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD GIỮ NGUYÊN 100% ==================== -->
   <div id="header">
     <img src="image/health.png" id="logo" alt="Smart Health Monitoring Logo">
     <div id="header-title">
@@ -25,7 +102,7 @@
     </div>
   </div>
 
-  <!-- MENU XỔ XUỐNG – CÓ AI -->
+  <!-- MENU XỔ XUỐNG -->
   <div id="logo-menu" class="hidden">
     <ul>
       <li onclick="showSection('input')">Enter Number Phone</li>
@@ -52,7 +129,7 @@
     <p id="status"></p>
   </div>
 
-  <!-- HIỂN THỊ CẢM BIẾN + BIỂU ĐỒ – ĐÃ XÓA AI BOX -->
+  <!-- HIỂN THỊ CẢM BIẾN + BIỂU ĐỒ -->
   <div id="display-section" class="section hidden">
     <section class="sensor-row">
       <div class="sensor-box">
@@ -79,7 +156,7 @@
     </section>
   </div>
 
-  <!-- AI RIÊNG – CHỈ CÓ Ở ĐÂY -->
+  <!-- AI RIÊNG -->
   <div id="ai-section" class="section hidden">
     <div class="ai-container">
       <h1>AI Health Prediction</h1>
@@ -93,7 +170,7 @@
         </div>
         <div class="input-group">
           <label>SpO₂ (%):</label>
-         <input type="number" id="ai-spo2" placeholder="Enter SpO₂" min="70" max="100">
+          <input type="number" id="ai-spo2" placeholder="Enter SpO₂" min="70" max="100">
         </div>
       </div>
       <button id="ai-predict-btn" class="btn-ai-predict">PREDICT NOW</button>
@@ -101,9 +178,6 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.2.10/firebase-database.js"></script>
   <script src="function.js"></script>
 </body>
 </html>

@@ -364,3 +364,80 @@ button[type="submit"] {
   border: 3px dashed #dee2e6;
   transition: all 0.4s;
 }
+/* ==================== TOÀN BỘ CODE CSS GỐC CỦA BẠN (KHÔNG ĐỘNG VÀO) ==================== */
+body {
+  font-family: tahoma;
+  font-size: 25px;
+  width: 100%;
+  margin: 0px auto;
+  background-image: url('image/SPKT.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ... TẤT CẢ CODE CSS GỐC CỦA BẠN Ở ĐÂY (không thay đổi gì) ... */
+/* (Mình giữ nguyên 100% phần cũ, chỉ thêm phần dưới đây) */
+
+/* ==================== THÊM MỚI: LOGIN SCREEN ==================== */
+#login-section {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #006a9b 0%, #004b7d 100%);
+  background-image: url('image/SPKT.jpg');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.login-container {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  width: 420px;
+  max-width: 90%;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.login-header img { width: 80px; height: 80px; margin-bottom: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+.login-header h1 { color: #006a9b; font-size: 36px; font-weight: bold; margin: 10px 0; letter-spacing: 2px; }
+.login-header p { color: #444; font-size: 16px; margin: 0; }
+.login-title h2 { color: #006a9b; font-size: 28px; margin: 20px 0 30px; font-weight: bold; }
+
+.input-group-login { margin-bottom: 20px; text-align: left; }
+.input-group-login label { display: block; color: #333; font-weight: bold; margin-bottom: 6px; font-size: 14px; }
+.input-group-login input {
+  width: 100%; padding: 12px 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;
+  transition: all 0.3s; box-sizing: border-box;
+}
+.input-group-login input:focus { outline: none; border-color: #006a9b; box-shadow: 0 0 8px rgba(0, 106, 155, 0.3); }
+
+.login-options { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 14px; }
+.login-options label { color: #555; cursor: pointer; }
+.forgot-pass { color: #006a9b; text-decoration: none; }
+.forgot-pass:hover { text-decoration: underline; }
+
+.btn-login {
+  width: 100%; padding: 14px; background: linear-gradient(to right, #006a9b, #004b7d);
+  color: white; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;
+  transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 106, 155, 0.4);
+}
+.btn-login:hover {
+  background: linear-gradient(to right, #005585, #003a63);
+  transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 106, 155, 0.5);
+}
+
+.login-footer { margin-top: 25px; font-size: 14px; color: #666; }
+.login-footer a { color: #006a9b; text-decoration: none; font-weight: bold; }
+.login-footer a:hover { text-decoration: underline; }
