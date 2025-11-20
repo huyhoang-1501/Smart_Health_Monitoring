@@ -343,14 +343,30 @@ function logout() {
   document.getElementById("logo-menu").classList.add("hidden"); // Đóng menu
   
   firebase.auth().signOut().then(() => {
-    // Quay lại màn hình đăng nhập
+    // 1. Reset lại nút Google về trạng thái ban đầu (quan trọng nhất)
+    const googleBtn = document.querySelector('#login-form .btn-login[style*="background:#4285F4"]');
+    if (googleBtn) {
+      googleBtn.disabled = false;
+      googleBtn.innerHTML = '<i class="fab fa-google" style="margin-right:12px;"></i> Đăng nhập bằng Google';
+    }
+
+    // 2. Reset nút Email nếu cần (phòng hờ)
+    const emailBtn = document.getElementById('email-signin-btn');
+    if (emailBtn) {
+      emailBtn.disabled = false;
+      emailBtn.innerHTML = 'Đăng nhập bằng Email';
+    }
+
+    // 3. Quay lại màn hình đăng nhập
     document.getElementById("login-section").style.display = "flex";
     
-    // Ẩn tất cả section dashboard
+    // Ẩn hết các section dashboard
     document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
     
-    // Optional: hiện lại welcome tạm thời (nhưng sẽ bị login che)
-    showSection('welcome');
+    // Xóa hết value trong các ô input (cho sạch)
+    document.getElementById('email-login').value = '';
+    document.getElementById('password-login').value = '';
+
   }).catch(err => {
     alert("Lỗi đăng xuất: " + err.message);
   });
