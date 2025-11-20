@@ -90,32 +90,46 @@ function showSection(section) {
   }
 
   if (section === "ai") {
-    firebase.database().ref("parameter").once("value").then(snap => {
+    // Lấy dữ liệu realtime từ project-2-health và tự động dự đoán
+    db.ref("parameter").on("value", snap => {
       const data = snap.val();
       if (data && data.heartbeat !== undefined && data.spo2 !== undefined) {
         document.getElementById('ai-bpm').value = data.heartbeat;
         document.getElementById('ai-spo2').value = data.spo2;
-        setTimeout(autoPredict, 1000);
+        autoPredict();
       }
-    }).catch(err => console.error("Lỗi lấy dữ liệu từ Firebase:", err));
+    }, err => console.error("Lỗi realtime AI:", err));
   }
 }
 
-// ================== FIREBASE CẤU HÌNH ==================
-const firebaseConfig = {
+// ================== PROJECT 1: AUTH (LOGIN GOOGLE + EMAIL) - project2-98ad4 ==================
+const firebaseConfigAuth = {
   apiKey: "AIzaSyDH4COmuxxveRdD9zQXGJ29vHLR8SJuK78",
   authDomain: "project2-98ad4.firebaseapp.com",
-  databaseURL: "https://project2-98ad4-default-rtdb.firebaseio.com",
   projectId: "project2-98ad4",
   storageBucket: "project2-98ad4.firebasestorage.app",
   messagingSenderId: "807037680757",
-  appId: "1:807037680757:web:098f72aa9ba8fce1de8c3c",
-  measurementId: "G-BJK9XTJYR6"
+  appId: "1:807037680757:web:0b2444f98b6de11cde8c3c",
+  measurementId: "G-PJYML82PZW"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
 
-// ================== LƯU & XÓA SỐ ĐIỆN THOẠI ==================
+const appAuth = firebase.initializeApp(firebaseConfigAuth, "authApp");
+const auth = appAuth.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.NONE);
+
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// ================== PROJECT 2: DATA (REALTIME CẢM BIẾN) - project-2-health ==================
+const firebaseConfigData = {
+  apiKey: "AIzaSyD3_MWJ-A5wkar9UdDEjo0EuTTmmjxs-vo",
+  databaseURL: "https://project-2-health-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+const appData = firebase.initializeApp(firebaseConfigData, "dataApp");
+const db = appData.database();
+
+// ================== LƯU & XÓA SỐ ĐIỆN THOẠI (dùng project auth) ==================
 document.getElementById("phone-form").addEventListener("submit", function(e) {
   e.preventDefault();
   const phone = document.getElementById("phone-input").value.trim();
@@ -147,7 +161,7 @@ document.getElementById("delete-btn").addEventListener("click", function() {
     });
 });
 
-// ================== HIỂN THỊ DỮ LIỆU CẢM BIẾN + BIỂU ĐỒ ==================
+// ================== HIỂN THỊ DỮ LIỆU CẢM BIẾN + BIỂU ĐỒ (từ project-2-health) ==================
 const el = {
   heartbeat: document.getElementById('heartbeat'),
   steps: document.getElementById('steps'),
@@ -220,7 +234,7 @@ document.getElementById('ai-predict-btn')?.addEventListener('click', async () =>
   const spo2 = parseFloat(document.getElementById('ai-spo2').value) || 0;
 
   if (bpm < 30 || bpm > 200 || spo2 < 70 || spo2 > 100) {
-    resultEl.textContent = "Dữ liệu không hợp lệ! (HR: 30-200, SpO₂: 70-100)";
+    resultEl.textContent = "Dữ liệu không hợp lệ!";
     resultEl.style.color = "white";
     resultEl.style.background = "#e74c3c";
     resultEl.style.padding = "16px 24px";
@@ -261,11 +275,7 @@ document.getElementById('ai-predict-btn')?.addEventListener('click', async () =>
 });
 
 // ================== ĐĂNG NHẬP & ĐĂNG KÝ EMAIL + GOOGLE (CHỈ HIỆN WELCOME) ==================
-const auth = firebase.auth();
-auth.setPersistence(firebase.auth.Auth.Persistence.NONE); // Phải login lại mỗi lần
-
-const googleProvider = new firebase.auth.GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
+// (dùng project auth - project2-98ad4)
 
 // Chuyển form
 document.getElementById("show-register")?.addEventListener("click", e => {
@@ -291,7 +301,7 @@ document.getElementById("register-btn")?.addEventListener("click", () => {
     .then(() => {
       alert("Đăng ký thành công!");
       document.getElementById("login-section").style.display = "none";
-      showSection('welcome'); // Chỉ hiện welcome
+      showSection('welcome');
     })
     .catch(err => alert("Lỗi đăng ký: " + err.message));
 });
@@ -306,7 +316,7 @@ document.getElementById("email-signin-btn")?.addEventListener("click", () => {
   auth.signInWithEmailAndPassword(email, pass)
     .then(() => {
       document.getElementById("login-section").style.display = "none";
-      showSection('welcome'); // Chỉ hiện welcome
+      showSection('welcome');
     })
     .catch(err => alert("Sai email hoặc mật khẩu!\n" + err.message));
 });
@@ -322,7 +332,7 @@ document.getElementById("login-form").addEventListener("submit", function(e) {
   auth.signInWithPopup(googleProvider)
     .then(() => {
       document.getElementById("login-section").style.display = "none";
-      showSection('welcome'); // Chỉ hiện welcome
+      showSection('welcome');
     })
     .catch(err => {
       btn.disabled = false;
@@ -331,41 +341,47 @@ document.getElementById("login-form").addEventListener("submit", function(e) {
     });
 });
 
-// Khi reload trang → chỉ hiện welcome (nếu có user thì vẫn chỉ hiện welcome thôi)
+// Khi reload trang → chỉ hiện welcome
 auth.onAuthStateChanged(user => {
   if (user) {
     document.getElementById("login-section").style.display = "none";
-    showSection('welcome'); // Luôn hiện welcome khi đã login
+    showSection('welcome');
   }
 });
-// ================== LOG OUT ==================
+
+// ================== LOG OUT (SỬA ĐỂ HOÀN HẢO 100%) ==================
 function logout() {
   document.getElementById("logo-menu").classList.add("hidden"); // Đóng menu
-  
-  firebase.auth().signOut().then(() => {
-    // 1. Reset lại nút Google về trạng thái ban đầu (quan trọng nhất)
-    const googleBtn = document.querySelector('#login-form .btn-login[style*="background:#4285F4"]');
+
+  // Logout chính xác từ appAuth
+  auth.signOut().then(() => {
+    // Reset nút Google
+    const googleBtn = document.querySelector('#login-form button[type="submit"]');
     if (googleBtn) {
       googleBtn.disabled = false;
       googleBtn.innerHTML = '<i class="fab fa-google" style="margin-right:12px;"></i> Đăng nhập bằng Google';
     }
 
-    // 2. Reset nút Email nếu cần (phòng hờ)
+    // Reset nút Email
     const emailBtn = document.getElementById('email-signin-btn');
     if (emailBtn) {
       emailBtn.disabled = false;
       emailBtn.innerHTML = 'Đăng nhập bằng Email';
     }
 
-    // 3. Quay lại màn hình đăng nhập
+    // Hiện lại màn hình login
     document.getElementById("login-section").style.display = "flex";
-    
-    // Ẩn hết các section dashboard
+
+    // Ẩn hết dashboard
     document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
-    
-    // Xóa hết value trong các ô input (cho sạch)
-    document.getElementById('email-login').value = '';
-    document.getElementById('password-login').value = '';
+
+    // Xóa value input
+    const emailLogin = document.getElementById('email-login');
+    const passLogin = document.getElementById('password-login');
+    if (emailLogin) emailLogin.value = '';
+    if (passLogin) passLogin.value = '';
+
+    console.log("Đăng xuất thành công! Quay lại màn hình login.");
 
   }).catch(err => {
     alert("Lỗi đăng xuất: " + err.message);
