@@ -338,3 +338,20 @@ auth.onAuthStateChanged(user => {
     showSection('welcome'); // Luôn hiện welcome khi đã login
   }
 });
+// ================== LOG OUT ==================
+function logout() {
+  document.getElementById("logo-menu").classList.add("hidden"); // Đóng menu
+  
+  firebase.auth().signOut().then(() => {
+    // Quay lại màn hình đăng nhập
+    document.getElementById("login-section").style.display = "flex";
+    
+    // Ẩn tất cả section dashboard
+    document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
+    
+    // Optional: hiện lại welcome tạm thời (nhưng sẽ bị login che)
+    showSection('welcome');
+  }).catch(err => {
+    alert("Lỗi đăng xuất: " + err.message);
+  });
+}
