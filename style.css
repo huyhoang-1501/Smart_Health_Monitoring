@@ -441,3 +441,34 @@ body {
 .login-footer { margin-top: 25px; font-size: 14px; color: #666; }
 .login-footer a { color: #006a9b; text-decoration: none; font-weight: bold; }
 .login-footer a:hover { text-decoration: underline; }
+#status {
+  margin-top: 25px;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 16px 30px;
+  border-radius: 16px;
+  display: inline-block;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  transition: all 0.4s ease;
+  opacity: 0;
+  transform: translateY(-15px);
+}
+
+#status:not(:empty) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Lưu thành công → xanh lá */
+#status.success {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  color: #155724;
+  border: 3px solid #a8e6b8;
+}
+
+/* Xóa thành công → vàng cam */
+#status.delete {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  color: #856404;
+  border: 3px solid #ffd89b;
+}

@@ -145,6 +145,7 @@ document.getElementById("phone-form").addEventListener("submit", function(e) {
     .then(() => {
       status.textContent = "Lưu thành công!";
       status.style.color = "green";
+      status.classList.add("success");
       document.getElementById("phone-input").value = "";
     })
     .catch(err => {
@@ -158,6 +159,7 @@ document.getElementById("delete-btn").addEventListener("click", function() {
     .then(() => {
       document.getElementById("status").textContent = "Đã xóa số điện thoại!";
       document.getElementById("status").style.color = "orange";
+      document.getElementById("status").classList.add("delete");
     });
 });
 
