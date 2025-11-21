@@ -274,10 +274,7 @@ document.getElementById('ai-predict-btn')?.addEventListener('click', async () =>
   resultEl.style.transition = 'all 0.4s ease';
 });
 
-// ================== ĐĂNG NHẬP & ĐĂNG KÝ EMAIL + GOOGLE (CHỈ HIỆN WELCOME) ==================
-// (dùng project auth - project2-98ad4)
-
-// Chuyển form
+// ================== ĐĂNG NHẬP & ĐĂNG KÝ EMAIL + GOOGLE ==================
 document.getElementById("show-register")?.addEventListener("click", e => {
   e.preventDefault();
   document.getElementById("login-form").style.display = "none";
@@ -303,7 +300,7 @@ document.getElementById("register-btn")?.addEventListener("click", () => {
       document.getElementById("login-section").style.display = "none";
       showSection('welcome');
     })
-    .catch(err => alert("Lỗi đăng ký: " + err.message));
+    .catch(err => alert("Lỗi đăng ký"));
 });
 
 // ĐĂNG NHẬP EMAIL
@@ -318,7 +315,7 @@ document.getElementById("email-signin-btn")?.addEventListener("click", () => {
       document.getElementById("login-section").style.display = "none";
       showSection('welcome');
     })
-    .catch(err => alert("Sai email hoặc mật khẩu!\n" + err.message));
+    .catch(err => alert("Sai email hoặc mật khẩu!"));
 });
 
 // ĐĂNG NHẬP GOOGLE
@@ -337,7 +334,7 @@ document.getElementById("login-form").addEventListener("submit", function(e) {
     .catch(err => {
       btn.disabled = false;
       btn.innerHTML = old;
-      alert("Lỗi Google login: " + err.message);
+      alert("Lỗi Google login");
     });
 });
 
@@ -349,7 +346,7 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// ================== LOG OUT (SỬA ĐỂ HOÀN HẢO 100%) ==================
+// ================== LOG OUT  ==================
 function logout() {
   document.getElementById("logo-menu").classList.add("hidden"); // Đóng menu
 
@@ -384,6 +381,6 @@ function logout() {
     console.log("Đăng xuất thành công! Quay lại màn hình login.");
 
   }).catch(err => {
-    alert("Lỗi đăng xuất: " + err.message);
+    alert("Lỗi đăng xuất" );
   });
 }
