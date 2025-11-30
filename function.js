@@ -348,41 +348,38 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// ================== LOG OUT  ==================
+// ================== LOG OUT (ĐÃ FIX 100% SPINNER XOAY MÃI) ==================
 function logout() {
-  document.getElementById("logo-menu").classList.add("hidden"); // Đóng menu
+  document.getElementById("logo-menu").classList.add("hidden");
 
-  // Logout chính xác từ appAuth
   auth.signOut().then(() => {
-    // Reset nút Google
-    const googleBtn = document.querySelector('#login-form button[type="submit"]');
-    if (googleBtn) {
-      googleBtn.disabled = false;
-      googleBtn.innerHTML = '<i class="fab fa-google" style="margin-right:12px;"></i> Đăng nhập bằng Google';
-    }
-
-    // Reset nút Email
-    const emailBtn = document.getElementById('email-signin-btn');
-    if (emailBtn) {
-      emailBtn.disabled = false;
-      emailBtn.innerHTML = 'Đăng nhập bằng Email';
-    }
-
-    // Hiện lại màn hình login
+    // Ẩn dashboard, hiện lại login
     document.getElementById("login-section").style.display = "flex";
-
-    // Ẩn hết dashboard
     document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
 
-    // Xóa value input
+    // XÓA sạch value input
     const emailLogin = document.getElementById('email-login');
     const passLogin = document.getElementById('password-login');
     if (emailLogin) emailLogin.value = '';
     if (passLogin) passLogin.value = '';
 
-    console.log("Đăng xuất thành công! Quay lại màn hình login.");
+    // === FIX DỨT ĐIỂM SPINNER XOAY MÃI ===
+    setTimeout(() => {  // dùng setTimeout để chắc chắn DOM đã render xong màn login
+      const googleBtn = document.querySelector('#login-form button[type="submit"]');
+      const emailBtn  = document.getElementById('email-signin-btn');
 
+      if (googleBtn) {
+        googleBtn.disabled = false;
+        googleBtn.innerHTML = '<i class="fab fa-google" style="margin-right:12px;"></i> Đăng nhập bằng Google';
+      }
+      if (emailBtn) {
+        emailBtn.disabled = false;
+        emailBtn.textContent = 'Đăng nhập bằng Email';
+      }
+    }, 100);
+
+    console.log("Đăng xuất thành công!");
   }).catch(err => {
-    alert("Lỗi đăng xuất" );
+    alert("Lỗi đăng xuất: " + err.message);
   });
 }
