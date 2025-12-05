@@ -39,54 +39,54 @@ graph TD
 ### 3. Warning & Emergency Call Mechanism
 ```
 graph TD
-    Start[Continuous monitoring] --> HR{HR <50 or >100?}
-    HR -->|Yes| W1[bpm_warni
+    Start["Continuous monitoring"] --> HR{"HR <50 or >100?"}
+    HR -->|Yes| W1["bpm_warning +1"]
+    HR -->|No| W1
+
+    Step{"Steps ≤80 in 1 min?"} --> W2["step_warning +1"]
+
+    W1 & W2 --> Trigger{"Warning triggered?"}
+    Trigger -->|Yes| Alert["Buzzer + LED ON"]
+    Alert --> Timer["90-second countdown"]
+    Timer --> TimeUp{"90s passed?"}
+    TimeUp -->|Yes| Call["EMERGENCY CALL<br>ATD + number"]
+    TimeUp -->|No| Wait["Wait for button A"]
+    Wait -->|Press A| Off["Cancel alert"]
+
+    style Call fill:#e74c3c,stroke:#fff,color:#fff
+    style Alert fill:#f39c12,color:#333
 ```markdown
 ### 4. AI Health Prediction Flow
 ```
 graph LR
-    A[Web receives real-time data] --> B[Auto fill BPM & SpO₂]
-    B --> C[Click "Predict" or autoPredict()]
-    C --> D[Normalize data<br>z-score = (x-mean)/scale]
-    D --> E[onnxSession.run(input)]
-    E --> F[Argmax → class index]
-    F --> G[Show result + color<br>Normal / Warning / Danger...]
+    A["Web receives real-time data"] --> B["Auto fill BPM & SpO₂"]
+    B --> C["Click Predict or autoPredict()"]
+    C --> D["Normalize: z-score"]
+    D --> E["onnxSession.run()"]
+    E --> F["Argmax → class"]
+    F --> G["Show result + color"]
 
     style G fill:#2ecc71,stroke:#333,color:#fff
-    style C fill:#3498db,color:#fffng +1]
-    HR -->|No| W1
-
-    Step{Steps ≤80 in 1 min?} --> W2[step_warning +1]
-
-    W1 & W2 --> Trigger{bpm_warning ≥3<br>or step_warning ≥2?}
-    Trigger -->|Yes| Alert[Turn on buzzer + LED]
-    Alert --> Timer[Start 90-second countdown]
-    Timer --> TimeUp{90s passed?}
-    TimeUp -->|Yes| Call[EMERGENCY CALL<br>ATD + saved number]
-    TimeUp -->|No| Wait[Wait for button A]
-    Wait -->|Press A| Off[Cancel alert]
-
-    style Call fill:#e74c3c,stroke:#fff,color:#fff
-    style Alert fill:#f39c12,stroke:#333,color:#fff
+    style C fill:#3498db,color:#fff
 ```
 
 ```markdown
 ### 5. Phone Number Management
 ```
 graph TD
-    subgraph Web_App["Web Interface"]
-        W1[User enters phone number] --> W2[Save to Firebase<br>/user/phone/sdt]
+    subgraph Web["Web Interface"]
+        W1["Enter phone number"] --> W2["Save to Firebase"]
     end
 
-    subgraph ESP32_Device["ESP32 + Keypad"]
-        K1[Press * key] --> K2[Enter number mode]
-        K2 --> K3[Press digits → show on OLED]
-        K3 --> K4[Press D → Save]
-        K4 --> K5[Upload to Firebase<br>/user/phone/sdt]
-        K6[Press C] --> K7[Call immediately]
+    subgraph ESP32["ESP32 + Keypad"]
+        K1["Press *"] --> K2["Enter number mode"]
+        K2 --> K3["Press digits"]
+        K3 --> K4["Press D → Save"]
+        K4 --> K5["Upload to Firebase"]
+        K6["Press C"] --> K7["Call now"]
     end
 
-    W2 & K5 --> FB[Firebase<br>Saved Phone Number]
+    W2 & K5 --> FB["Firebase<br>Saved Number"]
     FB --> K7
 
     style FB fill:#f1c40f,stroke:#333
