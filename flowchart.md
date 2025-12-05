@@ -19,23 +19,22 @@ graph TD
     style G fill:#e74c3c,stroke:#fff,color:#fff
 ```
 
-```markdown
 ### 2. Sensor Data Flow
 ```
 graph TD
-    M1[MAX30100<br>Heart Rate + SpO₂] --> U1[pox.update() every loop]
-    M2[MPU6050<br>Accelerometer] --> U2[Step counting<br>threshold + debounce]
+    M1["MAX30100<br>Heart Rate + SpO₂"] --> U1["pox.update() every loop"]
+    M2["MPU6050<br>Accelerometer"] --> U2["Step counting<br>threshold + debounce"]
 
-    U1 & U2 --> T[Every 60 seconds<br>Get average values]
-    T --> F[Send to Firebase<br>/parameter/heartbeat<br>/parameter/spo2<br>/parameter/steps]
-    F --> W[Web reads & Chart.js<br>Real-time update]
+    U1 & U2 --> T["Every 60 seconds<br>Get average values"]
+    T --> F["Send to Firebase<br>/parameter/..."]
+    F --> W["Web reads & Chart.js<br>Real-time update"]
 
     style M1 fill:#ff6b6b,color:#fff
     style M2 fill:#ff9f43,color:#fff
     style W fill:#4dabf7,color:#fff
 ```
 
-```markdown
+
 ### 3. Warning & Emergency Call Mechanism
 ```
 graph TD
@@ -55,7 +54,7 @@ graph TD
 
     style Call fill:#e74c3c,stroke:#fff,color:#fff
     style Alert fill:#f39c12,color:#333
-```markdown
+
 ### 4. AI Health Prediction Flow
 ```
 graph LR
@@ -70,7 +69,7 @@ graph LR
     style C fill:#3498db,color:#fff
 ```
 
-```markdown
+
 ### 5. Phone Number Management
 ```
 graph TD
