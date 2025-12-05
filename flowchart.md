@@ -54,7 +54,7 @@ graph TD
 
     style Call fill:#e74c3c,stroke:#fff,color:#fff
     style Alert fill:#f39c12,color:#333
-
+```
 ### 4. AI Health Prediction Flow
 ```
 graph LR
@@ -68,8 +68,6 @@ graph LR
     style G fill:#2ecc71,stroke:#333,color:#fff
     style C fill:#3498db,color:#fff
 ```
-
-
 ### 5. Phone Number Management
 ```
 graph TD
