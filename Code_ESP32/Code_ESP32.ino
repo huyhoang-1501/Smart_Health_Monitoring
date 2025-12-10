@@ -1,5 +1,5 @@
 /**
-* @file smart_health_monitor.cpp
+* @file Code_ESP32.ino
 * @brief Smart Health Monitor using ESP32, MAX30100, MPU6050, SH1106G OLED, Firebase, Keypad, and SIM A7682S.
 * @author Nguyen Pham Huy Hoang 22161125
 * @author Tran Nguyen Gia Huy 22161129
