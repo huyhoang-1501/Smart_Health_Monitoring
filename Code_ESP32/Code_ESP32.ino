@@ -1,3 +1,13 @@
+/**
+* @file smart_health_monitor.cpp
+* @brief Smart Health Monitor using ESP32, MAX30100, MPU6050, SH1106G OLED, Firebase, Keypad, and SIM A7682S.
+* @author Nguyen Pham Huy Hoang 22161125
+* @author Tran Nguyen Gia Huy 22161129
+*/
+
+// ================================================================
+// ======================== INCLUDE FILES ==========================
+// ================================================================
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
@@ -12,6 +22,8 @@
 #include <Keypad.h>
 #include <HardwareSerial.h>
 
+/** @defgroup WIFI Firebase WiFi Config */
+/** @{ */
 // ===== Thông tin WiFi và Firebase =====
 // #define WIFI_SSID "Phong Tro Tang 3.2"
 // #define WIFI_PASSWORD "99999999"
@@ -20,12 +32,18 @@
 #define API_KEY "AIzaSyD3_MWJ-A5wkar9UdDEjo0EuTTmmjxs-vo"
 #define DATABASE_URL "https://project-2-health-default-rtdb.asia-southeast1.firebasedatabase.app"
 
+
+// ================================================================
+// ========================= GLOBAL VARS ===========================
+// ================================================================
 // Firebase
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 bool signUp = false;
 
+/** @name OLED Config */
+/** @{ */
 // ===== OLED SPI =====
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
@@ -34,18 +52,27 @@ bool signUp = false;
 #define OLED_CS     5
 #define OLED_DC     15
 #define OLED_RST    4
+/** @} */
 
+/** @name I2C Pins */
+/** @{ */
 // I2C Pins cho MAX30100 và MPU6050
 #define I2C_SDA 21
 #define I2C_SCL 22
+/** @} */
 
+/** @name SIM A7682S UART Pins */
+/** @{ */
 // UART1 cho A7682S
 #define A7682S_RX 16
 #define A7682S_TX 17
+/** @} */
 
 // Chân GPIO cảnh báo
 #define PIN_OUT 2
 
+/** @name Keypad */
+/** @{ */
 // Keypad 4x4
 const byte ROWS = 4;
 const byte COLS = 4;
@@ -57,6 +84,7 @@ char keys[ROWS][COLS] = {
 };
 byte rowPins[4] = {27,14,12,13};
 byte colPins[4] = {32,33,25,26};
+/** @} */
 
 // Khởi tạo đối tượng 
 // OLED - DÙNG SH1106G
@@ -104,19 +132,25 @@ bool warning_enable = false;
 unsigned long warningStartTime = 0; // Thời điểm bắt đầu cảnh báo
 const unsigned long WARNING_DURATION = 90000; // 1 phút 30 giây
 
-
+/**
+* @brief Gửi lệnh AT đến module SIM A7682S
+* @param cmd Lệnh AT
+*/
 // ===== Gửi lệnh AT =====
 void sendAT(String cmd) {
   A7682S.println(cmd);
   Serial.println(">> " + cmd);
 }
-
-// ===== Callback cập nhật mỗi khi có nhịp tim =====
+/**
+* @brief Callback kích hoạt khi phát hiện nhịp tim
+*/
 void onBeatDetected() {
   Serial.println("Nhịp tim!");
 }
 
-// ====== Hiển thị giao diện ban đầu ======
+/**
+* @brief Hiển thị giao diện chính của hệ thống
+*/
 void giao_dien_hien_thi() {
   display.clearDisplay();
   
@@ -164,7 +198,9 @@ void giao_dien_hien_thi() {
   display.display();
 }
 
-// ===== Hiển thị màn hình nhập =====
+/**
+* @brief Hiển thị giao diện nhập số điện thoại
+*/
 void giao_dien_nhap_sdt() {
   display.clearDisplay();
   display.setTextSize(1);
@@ -185,7 +221,9 @@ void giao_dien_nhap_sdt() {
   display.display();
 }
 
-// Hiển thị lưu thành công 
+/**
+* @brief Hiển thị thông báo lưu thành công
+*/ 
 void man_hinh_luu() {
   display.clearDisplay();
   display.setTextSize(2);
@@ -195,7 +233,9 @@ void man_hinh_luu() {
   display.display();
 }
 
-// Gửi dữ liệu cảm biến lên Firebase và đọc số điện thoại từ trên Firebase
+/**
+* @brief Gửi dữ liệu lên Firebase và đọc số điện thoại từ server
+*/
 void gui_va_doc_du_lieu()
 {
   if (Firebase.ready() && signUp)
@@ -222,6 +262,9 @@ void gui_va_doc_du_lieu()
   }
 }
 
+/**
+* @brief Xử lý màn hình nhập số điện thoại
+*/
 void xu_li_man_hinh_nhap()
 {
   while (true) {
@@ -258,6 +301,9 @@ void xu_li_man_hinh_nhap()
   }
 }
 
+/**
+* @brief Xử lý nhấn nút keypad
+*/
 void xu_li_keypad() {
   char key = keypad.getKey();
   if (!key) return;
@@ -293,7 +339,9 @@ void xu_li_keypad() {
     }
   }
 
-// Hàm reset các biến trong quá trình đo
+/**
+* @brief Reset các biến đo
+*/
 void reset_cac_bien_do(){
       pox.begin(); // Re-init lại cảm biến 
       pox.setOnBeatDetectedCallback(onBeatDetected);
@@ -302,6 +350,9 @@ void reset_cac_bien_do(){
       stepCount = 0;
 }
 
+/**
+* @brief Đếm bước chân từ MPU6050
+*/
 void dem_buoc_chan()
 {
   // -------- MPU6050 Step Counter --------
@@ -341,7 +392,9 @@ void dem_buoc_chan()
   }
 }
 
-// ====== Hàm đo nhịp tim & SpO2 ======
+/**
+* @brief Xử lý & hiển thị HR, SpO2, Step
+*/
 void xu_li_va_hien_thi_thong_so() {
   if (measuring) {
     unsigned long elapsed = millis() - startTime;
@@ -407,7 +460,9 @@ void xu_li_va_hien_thi_thong_so() {
   }
 }
 
-// Hàm cảnh báo
+/**
+* @brief Hàm cảnh báo sức khỏe
+*/
 void canh_bao_suc_khoe()
 {
  if (bpm_warning >= 3 || step_warning >= 2)
@@ -443,7 +498,9 @@ void canh_bao_suc_khoe()
   }
 }
 
-// ===== Khởi tạo =====
+/**
+* @brief Hàm setup hệ thống
+*/
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -505,7 +562,9 @@ void setup() {
   startTime = millis();
 }
 
-// ===== Vòng lặp =====
+/**
+* @brief Vòng lặp chính
+*/
 void loop() {
   pox.update();
   dem_buoc_chan();
