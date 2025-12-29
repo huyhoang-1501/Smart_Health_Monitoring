@@ -132,6 +132,10 @@
 ![Image](https://github.com/user-attachments/assets/4361e7e2-2d6a-45c6-8e4f-ba75ed49c63c)
 ### AI health prediction:
 ![Image](https://github.com/user-attachments/assets/7be2303c-7350-4f8b-a878-4360972f8d56)
+### Images of product:
+![Image](https://github.com/user-attachments/assets/4bb43cde-c149-4c21-91a2-b828e711d18c)
+![Image](https://github.com/user-attachments/assets/af83aef0-5d5b-4544-87ab-86377fc6197b)
+![Image](https://github.com/user-attachments/assets/709f458b-a9a7-4570-8685-f801ea34270a)
 <br>
 
 <div align="center">
