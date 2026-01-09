@@ -25,12 +25,12 @@
 /** @defgroup WIFI Firebase WiFi Config */
 /** @{ */
 // ===== Thông tin WiFi và Firebase =====
-#define WIFI_SSID "Phong Tro Tang 3.2"
-#define WIFI_PASSWORD "99999999"
+// #define WIFI_SSID "Phong Tro Tang 3.2"
+// #define WIFI_PASSWORD "99999999"
 //#define WIFI_SSID "HUY HOANG"
 //#define WIFI_PASSWORD "123456789"
-// #define WIFI_SSID "Huy Hoang"
-// #define WIFI_PASSWORD "cudiroiseden"
+#define WIFI_SSID "Huy Hoang"
+#define WIFI_PASSWORD "cudiroiseden"
 #define API_KEY "AIzaSyD3_MWJ-A5wkar9UdDEjo0EuTTmmjxs-vo"
 #define DATABASE_URL "https://project-2-health-default-rtdb.asia-southeast1.firebasedatabase.app"
 
