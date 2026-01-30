@@ -120,6 +120,7 @@
 - Three real-time line charts (HR, SpO₂, Steps)
 - **AI Health Prediction tab** – automatic inference with stunning UI
 - Fully responsive (mobile & desktop friendly)
+<br>
 
 ## Image:
 ### Login interface:
