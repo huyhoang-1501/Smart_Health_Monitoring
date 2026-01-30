@@ -30,7 +30,7 @@ async function loadAIModel() {
     aiScaler = await scalerResp.json();
     console.log("Scaler loaded thành công!");
 
-    status.textContent = "AI sẵn sàng! Dự đoán ngay";
+    status.textContent = "Inference Service: Available";
     status.style.color = "green";
 
     setTimeout(() => {
