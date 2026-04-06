@@ -1,26 +1,5 @@
 <div align="center">
   <h1>Smart Health Monitoring System</h1>
-  <p>
-    <img src="https://img.shields.io/badge/Microcontroller-ESP32-blueviolet?style=for-the-badge&logo=espressif&logoColor=white" alt="ESP32">
-    <img src="https://img.shields.io/badge/Sensor-MAX30100-red?style=for-the-badge&logo=heartbeat&logoColor=white" alt="MAX30100">
-    <img src="https://img.shields.io/badge/Sensor-MPU6050-orange?style=for-the-badge&logo=accelerometer&logoColor=white" alt="MPU6050">
-    <img src="https://img.shields.io/badge/Display-SH110X%20128x64%20OLED-blue?style=for-the-badge&logo=display&logoColor=white" alt="SH110X OLED">
-    <img src="https://img.shields.io/badge/Keypad-4x4%20Matrix-green?style=for-the-badge&logo=keyboard&logoColor=white" alt="Keypad">
-    <img src="https://img.shields.io/badge/GSM-A7682S-yellow?style=for-the-badge&logo=signal&logoColor=white" alt="A7682S">
-    <img src="https://img.shields.io/badge/Cloud-Firebase-critical?style=for-the-badge&logo=firebase&logoColor=white" alt="Firebase">
-    <img src="https://img.shields.io/badge/AI-ONNX%20Inference-success?style=for-the-badge&logo=tensorflow&logoColor=white" alt="AI ONNX">
-    <img src="https://img.shields.io/badge/Language-C%2B%2B-blue?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++">
-  </p>
-  ---
-  <p>
-    <a href="#-overview">Overview</a> •
-    <a href="#-key-features">Key Features</a> •
-    <a href="#-ai-health-prediction">AI Health Prediction</a> •
-    <a href="#-setup-guide">Setup Guide</a> •
-    <a href="#-web-dashboard">Web Dashboard</a> •
-    <a href="#-development-team">Team</a>
-  </p>
-  ---
 </div>
 <br>
 
